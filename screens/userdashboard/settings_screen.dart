@@ -984,6 +984,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           iconBg: _instagramPink.withValues(
                               alpha: isDark ? 0.20 : 0.10),
                           iconColor: _instagramPink,
+                          tintIcon: false,
                           label: 'Follow us on Instagram',
                           subtitle: '@${ContactLinks.instagramUsername}',
                           onTap: () => ContactLinks.openInstagram(context),
@@ -999,6 +1000,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                           iconBg:
                               _gmailRed.withValues(alpha: isDark ? 0.20 : 0.10),
                           iconColor: _gmailRed,
+                          tintIcon: false,
                           label: 'Reach us on Gmail',
                           subtitle: ContactLinks.supportEmail,
                           onTap: () => ContactLinks.openGmail(context),
@@ -1117,6 +1119,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     required Color subtitleColor,
     required bool isDark,
     Color? labelColor,
+    bool tintIcon = true,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -1150,8 +1153,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                 iconAsset,
                 fit: BoxFit.contain,
                 filterQuality: FilterQuality.high,
-                color: iconColor,
-                colorBlendMode: BlendMode.srcIn,
+                color: tintIcon ? iconColor : null,
+                colorBlendMode: tintIcon ? BlendMode.srcIn : null,
                 errorBuilder: (_, __, ___) =>
                     Icon(fallbackIcon, color: iconColor, size: 22),
               ),
