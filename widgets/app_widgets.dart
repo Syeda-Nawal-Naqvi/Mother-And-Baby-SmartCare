@@ -942,6 +942,8 @@ class AppRecordStreamList extends StatefulWidget {
   final Color? emptyAccentColor;
   final bool descending;
   final String orderByField;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
   final Widget Function(
     BuildContext context,
     Map<String, dynamic> data,
@@ -960,6 +962,8 @@ class AppRecordStreamList extends StatefulWidget {
     this.emptyAccentColor,
     this.descending = true,
     this.orderByField = 'createdAt',
+    this.shrinkWrap = false,
+    this.physics,
   });
 
   @override
@@ -1024,6 +1028,8 @@ class _AppRecordStreamListState extends State<AppRecordStreamList> {
               docs, widget.orderByField, widget.descending);
         }
         return ListView.builder(
+          shrinkWrap: widget.shrinkWrap,
+          physics: widget.physics,
           itemCount: docs.length,
           itemBuilder: (context, index) {
             final doc = docs[index];
