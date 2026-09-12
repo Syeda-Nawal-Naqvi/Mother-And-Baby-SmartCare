@@ -144,184 +144,180 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 480),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        children: [
-                          SizedBox(height: isCompact ? 24 : 40),
-                          Container(
-                            width: iconSize,
-                            height: iconSize,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFE91E8C), Color(0xFFFF6EB4)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: isCompact ? 24 : 40),
+                        Container(
+                          width: iconSize,
+                          height: iconSize,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFE91E8C), Color(0xFFFF6EB4)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFE91E8C)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 24,
+                                offset: const Offset(0, 10),
                               ),
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFE91E8C)
-                                      .withValues(alpha: 0.35),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.mark_email_unread_rounded,
-                              color: Colors.white,
-                              size: iconSize * 0.45,
-                            ),
+                            ],
                           ),
-                          SizedBox(height: isCompact ? 22 : 32),
-                          Text(
-                            'Verify Your Email',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: isCompact ? 22 : 26,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF3D1A2E),
-                            ),
+                          child: Icon(
+                            Icons.mark_email_unread_rounded,
+                            color: Colors.white,
+                            size: iconSize * 0.45,
                           ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'We sent a verification link to',
+                        ),
+                        SizedBox(height: isCompact ? 22 : 32),
+                        Text(
+                          'Verify Your Email',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: isCompact ? 22 : 26,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF3D1A2E),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'We sent a verification link to',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color:
+                                const Color(0xFFE91E8C).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            email,
                             textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFFE91E8C),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE91E8C)
-                                  .withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              email,
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFE91E8C),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.pink.shade100),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildStep('1', 'Open your Gmail app'),
+                              const SizedBox(height: 12),
+                              _buildStep('2', 'Find email from SmartCare'),
+                              const SizedBox(height: 12),
+                              _buildStep('3', 'Click the verification link'),
+                              const SizedBox(height: 12),
+                              _buildStep('4',
+                                  'Come back and tap "I\'ve Verified" below'),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: isCompact ? 24 : 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _isChecking ? null : _checkVerification,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE91E8C),
+                              foregroundColor: Colors.white,
+                              elevation: 4,
+                              shadowColor: const Color(0xFFE91E8C)
+                                  .withValues(alpha: 0.35),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 24),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.pink.shade100),
-                            ),
-                            child: Column(
-                              children: [
-                                _buildStep('1', 'Open your Gmail app'),
-                                const SizedBox(height: 12),
-                                _buildStep('2', 'Find email from SmartCare'),
-                                const SizedBox(height: 12),
-                                _buildStep('3', 'Click the verification link'),
-                                const SizedBox(height: 12),
-                                _buildStep('4',
-                                    'Come back and tap "I\'ve Verified" below'),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: isCompact ? 24 : 32),
-                          const Spacer(),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed:
-                                  _isChecking ? null : _checkVerification,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE91E8C),
-                                foregroundColor: Colors.white,
-                                elevation: 4,
-                                shadowColor: const Color(0xFFE91E8C)
-                                    .withValues(alpha: 0.35),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: _isChecking
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2.5),
-                                    )
-                                  : Text(
-                                      "I've Verified My Email ✓",
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                            child: _isChecking
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2.5),
+                                  )
+                                : Text(
+                                    "I've Verified My Email ✓",
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                            ),
+                                  ),
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: OutlinedButton(
-                              onPressed: (_isResending || _resendCooldown > 0)
-                                  ? null
-                                  : _resendEmail,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFFE91E8C),
-                                side: const BorderSide(
-                                    color: Color(0xFFE91E8C), width: 1.5),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: (_isResending || _resendCooldown > 0)
+                                ? null
+                                : _resendEmail,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFFE91E8C),
+                              side: const BorderSide(
+                                  color: Color(0xFFE91E8C), width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              child: _isResending
-                                  ? SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.pink.shade300,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
-                                  : Text(
-                                      _resendCooldown > 0
-                                          ? 'Resend in ${_resendCooldown}s'
-                                          : 'Resend Email',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                            ),
+                            child: _isResending
+                                ? SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.pink.shade300,
+                                      strokeWidth: 2.5,
                                     ),
+                                  )
+                                : Text(
+                                    _resendCooldown > 0
+                                        ? 'Resend in ${_resendCooldown}s'
+                                        : 'Resend Email',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _logout,
+                          child: Text(
+                            'Back to Login',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: _logout,
-                            child: Text(
-                              'Back to Login',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.grey.shade500,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ),
                   ),
                 ),
