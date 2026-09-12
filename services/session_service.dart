@@ -128,4 +128,24 @@ class SessionService {
         .snapshots()
         .map((snap) => snap.docs);
   }
+
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> streamAllSessions(
+      String uid) {
+    return _sessionsCol(uid).snapshots().map((snap) {
+      DateTime resolve(dynamic value) =>
+          value is Timestamp ? value.toDate() : DateTime.now();
+      final docs =
+          List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(snap.docs);
+      docs.sort((a, b) => resolve(b.data()['createdAt'])
+          .compareTo(resolve(a.data()['createdAt'])));
+      return docs;
+    });
+  }
+
+  Future<void> unblockSession(String uid, String sessionId) async {
+    await _sessionsCol(uid).doc(sessionId).set(
+      {'status': 'active', 'unblockedAt': FieldValue.serverTimestamp()},
+      SetOptions(merge: true),
+    );
+  }
 }
