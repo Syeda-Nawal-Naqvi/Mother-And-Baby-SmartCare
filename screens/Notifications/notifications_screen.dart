@@ -29,6 +29,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.feedback_rounded;
       case 'admin_message':
         return Icons.campaign_rounded;
+      case 'new_login':
+        return Icons.shield_rounded;
       default:
         return Icons.notifications_rounded;
     }
@@ -40,6 +42,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return const Color(0xFF10B981);
       case 'admin_message':
         return const Color(0xFFE91E8C);
+      case 'new_login':
+        return const Color(0xFFE74C3C);
       default:
         return const Color(0xFF3B82F6);
     }
@@ -155,6 +159,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 onDismissed: (_) => _service.deleteNotification(doc.id),
                 child: GestureDetector(
                   onTap: () {
+                    if (type == 'new_login') {
+                      final sessionId = data['relatedId'] as String?;
+                      Navigator.pushNamed(
+                        context,
+                        '/security_alert',
+                        arguments: {
+                          'sessionId': sessionId,
+                          'notificationId': doc.id,
+                        },
+                      );
+                      return;
+                    }
                     if (!read) _service.markAsRead(doc.id);
                   },
                   child: Container(
@@ -227,6 +243,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ],
                           ),
                         ),
+                        if (type == 'new_login') ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.chevron_right_rounded,
+                              color: subColor, size: 20),
+                        ],
                       ],
                     ),
                   ),
