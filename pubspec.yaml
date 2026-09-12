@@ -1,0 +1,63 @@
+name: mother_and_baby_smartcare
+description: Mother And Baby SmartCare
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  lottie: ^3.3.1
+  google_fonts: ^8.1.0
+  shared_preferences: ^2.5.3
+  flutter_screenutil: ^5.9.3
+  firebase_core: ^4.11.0
+  firebase_auth: ^6.5.3
+  cloud_firestore: ^6.6.0
+  google_sign_in: ^7.2.0
+  provider: ^6.1.5+1
+  url_launcher: ^6.3.1
+  connectivity_plus: ^7.1.1
+  intl: ^0.20.2
+
+  permission_handler: ^12.0.3
+  audioplayers: ^6.0.0
+  flutter_local_notifications: ^18.0.1
+
+  image_picker: ^1.1.2
+
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  fl_chart: ^1.0.0
+
+  flutter_email_sender: ^10.0.1
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  email_validator: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/lottie/
+    - assets/icons/
+    - assets/sounds/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/app_logo.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
