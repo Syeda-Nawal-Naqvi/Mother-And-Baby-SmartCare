@@ -152,219 +152,206 @@ class _AllergyScreenState extends State<AllergyScreen> {
                   child: ConstrainedBox(
                     constraints:
                         const BoxConstraints(maxWidth: _maxContentWidth),
-                    child: Column(
-                      children: [
-                        Flexible(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(16),
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                children: [
-                                  TextFormField(
-                                    controller: allergyController,
-                                    maxLength: _nameMaxLength,
-                                    style: TextStyle(color: theme.textPrimary),
-                                    decoration: _dec(
-                                        theme,
-                                        accent,
-                                        'Allergy Name',
-                                        'assets/icons/allergy.png',
-                                        Icons.warning_amber_rounded),
-                                    validator: (v) =>
-                                        (v == null || v.trim().isEmpty)
-                                            ? 'Enter allergy name'
-                                            : null,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: allergyController,
+                                  maxLength: _nameMaxLength,
+                                  style: TextStyle(color: theme.textPrimary),
+                                  decoration: _dec(
+                                      theme,
+                                      accent,
+                                      'Allergy Name',
+                                      'assets/icons/allergy.png',
+                                      Icons.warning_amber_rounded),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                          ? 'Enter allergy name'
+                                          : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: reactionController,
+                                  maxLength: _reactionMaxLength,
+                                  style: TextStyle(color: theme.textPrimary),
+                                  decoration: _dec(
+                                      theme,
+                                      accent,
+                                      'Reaction',
+                                      'assets/icons/reaction.png',
+                                      Icons.report_problem_rounded),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: adviceController,
+                                  maxLines: 3,
+                                  maxLength: _adviceMaxLength,
+                                  style: TextStyle(color: theme.textPrimary),
+                                  decoration: _dec(
+                                      theme,
+                                      accent,
+                                      'Doctor Advice',
+                                      'assets/icons/doctor_advice.png',
+                                      Icons.medical_services_rounded),
+                                ),
+                                const SizedBox(height: 18),
+                                Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                    gradient: ThemeService.allergyGradient,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: accent.withValues(alpha: 0.32),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 8)),
+                                    ],
                                   ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: reactionController,
-                                    maxLength: _reactionMaxLength,
-                                    style: TextStyle(color: theme.textPrimary),
-                                    decoration: _dec(
-                                        theme,
-                                        accent,
-                                        'Reaction',
-                                        'assets/icons/reaction.png',
-                                        Icons.report_problem_rounded),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  TextFormField(
-                                    controller: adviceController,
-                                    maxLines: 3,
-                                    maxLength: _adviceMaxLength,
-                                    style: TextStyle(color: theme.textPrimary),
-                                    decoration: _dec(
-                                        theme,
-                                        accent,
-                                        'Doctor Advice',
-                                        'assets/icons/doctor_advice.png',
-                                        Icons.medical_services_rounded),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
                                       borderRadius: BorderRadius.circular(14),
-                                      gradient: ThemeService.allergyGradient,
-                                      boxShadow: [
-                                        BoxShadow(
-                                            color:
-                                                accent.withValues(alpha: 0.32),
-                                            blurRadius: 16,
-                                            offset: const Offset(0, 8)),
-                                      ],
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        borderRadius: BorderRadius.circular(14),
-                                        onTap: isLoading ? null : _save,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 15),
-                                          child: Center(
-                                            child: isLoading
-                                                ? const SizedBox(
-                                                    height: 20,
-                                                    width: 20,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                            color:
-                                                                Colors.white))
-                                                : const Text('Save Allergy',
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontSize: 14.5,
-                                                        fontWeight:
-                                                            FontWeight.w700)),
-                                          ),
+                                      onTap: isLoading ? null : _save,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 15),
+                                        child: Center(
+                                          child: isLoading
+                                              ? const SizedBox(
+                                                  height: 20,
+                                                  width: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white))
+                                              : const Text('Save Allergy',
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 14.5,
+                                                      fontWeight:
+                                                          FontWeight.w700)),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  if (_statusMessage != null)
-                                    InlineStatusBanner(
-                                      message: _statusMessage!,
-                                      isError: _statusIsError,
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: AppRecordStreamList(
-                              collection: 'allergies',
-                              babyId: widget.babyId,
-                              emptyMessage:
-                                  'No allergy records for ${widget.babyName}',
-                              emptyIcon: Icons.warning_amber_rounded,
-                              emptyIconAsset: 'assets/icons/allergy.png',
-                              emptyAccentColor: accent,
-                              itemBuilder: (context, data, id, pending) {
-                                final cardColor = theme.isDark
-                                    ? Color.alphaBlend(
-                                        accent.withValues(alpha: 0.10),
-                                        theme.surface)
-                                    : theme.surface;
-                                return BabyTrackerZoomCard(
-                                  glowColor: accent,
-                                  borderRadius: BorderRadius.circular(16),
-                                  restBlur: 10,
-                                  restAlpha: theme.isDark ? 0.36 : 0.30,
-                                  activeAlpha: 0.66,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: cardColor,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                          color:
-                                              accent.withValues(alpha: 0.25)),
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        BabyTrackerIconBadge(
-                                          iconAsset: 'assets/icons/allergy.png',
-                                          fallbackIcon:
-                                              Icons.warning_amber_rounded,
-                                          accent: accent,
-                                          size: 44,
-                                          isDark: theme.isDark,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(data['allergyName'] ?? '',
-                                                  maxLines: 3,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      fontSize: 13.5,
-                                                      color:
-                                                          theme.textPrimary)),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                  'Reaction: ${data['reaction'] ?? '-'}\nAdvice: ${data['advice'] ?? '-'}',
-                                                  style: TextStyle(
-                                                      color:
-                                                          theme.textSecondary,
-                                                      fontSize: 12)),
-                                              if (pending) ...[
-                                                const SizedBox(height: 4),
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: ThemeService.warning
-                                                        .withValues(
-                                                            alpha: 0.16),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                  ),
-                                                  child: const Text('Syncing…',
-                                                      style: TextStyle(
-                                                          fontSize: 9.5,
-                                                          color: ThemeService
-                                                              .warning,
-                                                          fontWeight:
-                                                              FontWeight.w600)),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                              Icons.delete_outline_rounded,
-                                              color: ThemeService.danger,
-                                              size: 20),
-                                          onPressed: () => _delete(id),
-                                        ),
-                                      ],
-                                    ),
+                                ),
+                                if (_statusMessage != null)
+                                  InlineStatusBanner(
+                                    message: _statusMessage!,
+                                    isError: _statusIsError,
                                   ),
-                                );
-                              },
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 20),
+                          AppRecordStreamList(
+                            collection: 'allergies',
+                            babyId: widget.babyId,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            emptyMessage:
+                                'No allergy records for ${widget.babyName}',
+                            emptyIcon: Icons.warning_amber_rounded,
+                            emptyIconAsset: 'assets/icons/allergy.png',
+                            emptyAccentColor: accent,
+                            itemBuilder: (context, data, id, pending) {
+                              final cardColor = theme.isDark
+                                  ? Color.alphaBlend(
+                                      accent.withValues(alpha: 0.10),
+                                      theme.surface)
+                                  : theme.surface;
+                              return BabyTrackerZoomCard(
+                                glowColor: accent,
+                                borderRadius: BorderRadius.circular(16),
+                                restBlur: 10,
+                                restAlpha: theme.isDark ? 0.36 : 0.30,
+                                activeAlpha: 0.66,
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: cardColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                        color: accent.withValues(alpha: 0.25)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      BabyTrackerIconBadge(
+                                        iconAsset: 'assets/icons/allergy.png',
+                                        fallbackIcon:
+                                            Icons.warning_amber_rounded,
+                                        accent: accent,
+                                        size: 44,
+                                        isDark: theme.isDark,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(data['allergyName'] ?? '',
+                                                maxLines: 3,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 13.5,
+                                                    color: theme.textPrimary)),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                                'Reaction: ${data['reaction'] ?? '-'}\nAdvice: ${data['advice'] ?? '-'}',
+                                                style: TextStyle(
+                                                    color: theme.textSecondary,
+                                                    fontSize: 12)),
+                                            if (pending) ...[
+                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: ThemeService.warning
+                                                      .withValues(alpha: 0.16),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: const Text('Syncing…',
+                                                    style: TextStyle(
+                                                        fontSize: 9.5,
+                                                        color: ThemeService
+                                                            .warning,
+                                                        fontWeight:
+                                                            FontWeight.w600)),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                            Icons.delete_outline_rounded,
+                                            color: ThemeService.danger,
+                                            size: 20),
+                                        onPressed: () => _delete(id),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
