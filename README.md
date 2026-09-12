@@ -2,13 +2,13 @@
 
 A comprehensive Flutter health-tracking application designed to help mothers and families monitor maternal and infant health, manage medical records, shop for essentials, and stay connected with an admin-backed support system — all in one place.
 
----
+
 
 ## 📱 About the App
 
 **Mother & Baby SmartCare** is a cross-platform mobile app (Android & iOS) built with **Flutter** and **Firebase**, designed to make pregnancy and early childhood health tracking simple, organized, and accessible. It supports multiple family roles (mother, father, caretaker) alongside a full **admin dashboard** for platform-wide management.
 
----
+
 
 ## ✨ Features
 
@@ -73,7 +73,7 @@ A comprehensive Flutter health-tracking application designed to help mothers and
 - Send broadcast notifications
 - Admin-specific settings and profile
 
----
+
 
 ## 🧰 Tech Stack
 
@@ -94,7 +94,7 @@ A comprehensive Flutter health-tracking application designed to help mothers and
 | Media | `image_picker` |
 | App Icon | `flutter_launcher_icons` |
 
----
+
 
 ## 🚀 Getting Started
 
@@ -130,7 +130,7 @@ The launcher icon is generated from `assets/icons/app_logo.png` via `flutter_lau
 flutter pub run flutter_launcher_icons
 ```
 
----
+
 
 ## 📂 Project Structure
 
@@ -157,7 +157,7 @@ lib/
     └── admin/                      # Full admin dashboard & management screens
 ```
 
----
+
 
 ## 🔒 Firestore Data Model (high level)
 
@@ -172,19 +172,19 @@ lib/
 
 Security rules for all of the above are defined in `firestore.rules`.
 
----
+
 
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](../../issues) if you'd like to contribute.
 
----
+
 
 ## 📧 Contact
 
 For questions, feedback, or support, use the in-app **Contact Us** section, or open an issue on this repository.
 
----
+
 
 ## 📄 License
 
