@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../services/admin_service.dart';
+import '../../services/session_service.dart';
 import '../../services/theme_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final AdminService _adminService = AdminService();
+  final SessionService _sessionService = SessionService();
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -134,6 +137,179 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed to remove: $e')));
     }
+  }
+
+  Future<void> _unblockSession(
+      String uid, String sessionId, String deviceLabel) async {
+    try {
+      await _sessionService.unblockSession(uid, sessionId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$deviceLabel unblocked.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to unblock: $e')));
+    }
+  }
+
+  void _showSessionsSheet(AppThemeColors theme, String uid, String name) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.35,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (ctx, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: theme.border,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                  Text('$name — Devices & Sessions',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: theme.textPrimary)),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Blocked devices can only be unblocked here by an admin.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: theme.textSecondary),
+                  ),
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: StreamBuilder<
+                        List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
+                      stream: _sessionService.streamAllSessions(uid),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return Center(
+                              child: CircularProgressIndicator(
+                                  color: theme.accent));
+                        }
+                        final docs = snapshot.data ?? [];
+                        if (docs.isEmpty) {
+                          return Center(
+                            child: Text('No sessions found for this user.',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 13, color: theme.textSecondary)),
+                          );
+                        }
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: docs.length,
+                          itemBuilder: (context, i) {
+                            final data = docs[i].data();
+                            final sessionId = docs[i].id;
+                            final deviceLabel =
+                                (data['deviceLabel'] ?? 'Unknown device')
+                                    .toString();
+                            final status =
+                                (data['status'] ?? 'active').toString();
+                            final isRevoked = status == 'revoked';
+                            final Timestamp? ts = data['createdAt'];
+                            final timeLabel = ts != null
+                                ? DateFormat('dd/MM/yyyy hh:mm a')
+                                    .format(ts.toDate())
+                                : '';
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.surfaceAlt,
+                                borderRadius: BorderRadius.circular(14),
+                                border: isRevoked
+                                    ? Border.all(
+                                        color:
+                                            Colors.red.withValues(alpha: 0.35))
+                                    : Border.all(color: theme.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isRevoked
+                                        ? Icons.block_rounded
+                                        : Icons.devices_rounded,
+                                    color: isRevoked
+                                        ? Colors.red.shade300
+                                        : theme.accent,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(deviceLabel,
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: theme.textPrimary)),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isRevoked
+                                              ? 'Blocked · $timeLabel'
+                                              : 'Active · $timeLabel',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: isRevoked
+                                                ? Colors.red.shade300
+                                                : theme.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isRevoked)
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        _unblockSession(
+                                            uid, sessionId, deviceLabel);
+                                      },
+                                      child: Text('Unblock',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: const Color(0xFF10B981))),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -458,6 +634,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 8),
+                                    IconButton(
+                                      onPressed: () =>
+                                          _showSessionsSheet(theme, uid, name),
+                                      icon: Icon(Icons.devices_rounded,
+                                          color: theme.accent),
+                                      tooltip: 'Devices & sessions',
+                                    ),
+                                    const SizedBox(width: 4),
                                     IconButton(
                                       onPressed: () =>
                                           _confirmDelete(theme, uid, name),
