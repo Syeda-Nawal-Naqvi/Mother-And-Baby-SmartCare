@@ -559,6 +559,84 @@ class _AddBabySheetState extends State<_AddBabySheet> {
     super.dispose();
   }
 
+  Future<void> _pickBloodGroup(bool isDark, Color surface, Color border,
+      Color textPrimary, Color textSecondary) async {
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: border,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                Text('Select Blood Group',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary)),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: bloodGroupOptions.map((g) {
+                    final selected = bloodGroup == g;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => bloodGroup = g);
+                        Navigator.pop(ctx);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient:
+                              selected ? ThemeService.profileGradient : null,
+                          color:
+                              selected ? null : ThemeService.surfaceAlt(isDark),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: selected ? Colors.transparent : border,
+                              width: 1.2),
+                        ),
+                        child: Text(
+                          g,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: selected ? Colors.white : textPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   InputDecoration _dec(bool isDark, String label, IconData icon,
       {String? iconAsset}) {
     final accent =
@@ -736,18 +814,42 @@ class _AddBabySheetState extends State<_AddBabySheet> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  DropdownButtonFormField<String>(
-                    initialValue: bloodGroup,
-                    dropdownColor: surface,
-                    style: TextStyle(color: textPrimary),
-                    decoration: _dec(
-                        isDark, 'Blood Group', Icons.bloodtype_rounded,
-                        iconAsset: 'assets/icons/blood_group.png'),
-                    items: bloodGroupOptions
-                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                        .toList(),
-                    onChanged: (v) =>
-                        setState(() => bloodGroup = v ?? bloodGroup),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => _pickBloodGroup(
+                        isDark, surface, border, textPrimary, textSecondary),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: ThemeService.surfaceAlt(isDark),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: border),
+                      ),
+                      child: Row(
+                        children: [
+                          Image.asset(
+                            'assets/icons/blood_group.png',
+                            width: 20,
+                            height: 20,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.bloodtype_rounded,
+                                color: Color(0xFF5B9BD5),
+                                size: 20),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Blood Group: $bloodGroup',
+                              style: TextStyle(color: textPrimary),
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down_rounded,
+                              color: textSecondary),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 22),
                   Container(

@@ -60,6 +60,8 @@ class _SecurityAlertScreenState extends State<SecurityAlertScreen> {
     }
     setState(() => _isProcessing = true);
     await _sessionService.revokeSession(uid, widget.sessionId!);
+
+    await _sessionService.lockAccountAfterSuspiciousLogin(uid);
     await _markNotificationRead();
 
     final email = FirebaseAuth.instance.currentUser?.email;
@@ -70,7 +72,9 @@ class _SecurityAlertScreenState extends State<SecurityAlertScreen> {
     if (!mounted) return;
     setState(() => _isProcessing = false);
     _showResultToast(
-        'That login has been blocked. A password reset link was sent to your email for extra safety.');
+        'That login has been blocked and your account has been locked for '
+        'safety. A password reset link was sent to your email — an admin '
+        'will need to review and unblock your account.');
     await Future.delayed(const Duration(milliseconds: 600));
     if (!mounted) return;
     Navigator.pop(context);

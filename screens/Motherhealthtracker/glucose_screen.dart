@@ -144,11 +144,15 @@ class _GlucoseScreenState extends State<GlucoseScreen> {
     try {
       final value = double.parse(glucoseController.text.trim());
 
-      final data = {
-        ...GlucoseModel(glucoseLevel: value).toMap(),
-        'isFasting': _isFasting,
-      };
+      final data = GlucoseModel(
+        glucoseLevel: value,
+        isFasting: _isFasting,
+      ).toMap();
 
+      // 'createdAt' (date + time) is stamped automatically as a Firestore
+      // server timestamp inside FirestoreService.add, so every record is
+      // saved with an accurate date & time alongside the fasting/non-fasting
+      // selection made above.
       await FirestoreService.add('glucose', data);
 
       if (!mounted) return;
@@ -382,13 +386,15 @@ class _GlucoseScreenState extends State<GlucoseScreen> {
                                   : (isFasting == true
                                       ? 'Fasting'
                                       : 'Without Fasting');
+                              final dateTime =
+                                  formatRecordDateTime(data['createdAt']);
                               return _ThemedRecordCard(
                                 theme: theme,
                                 iconAsset: 'assets/icons/glucose.png',
                                 fallbackIcon: Icons.bloodtype_rounded,
                                 accent: _GlucoseTheme.blueMid,
                                 title: '${data['glucoseLevel']} mg/dL',
-                                subtitle: typeLabel,
+                                subtitle: '$typeLabel  •  $dateTime',
                                 onDelete: () => _delete(id),
                                 pendingSync: pending,
                               );

@@ -5,6 +5,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../services/cache_service.dart';
 import '../../services/email_share_service.dart';
@@ -378,6 +379,7 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
   bool _useDifferentEmail = false;
   final TextEditingController _emailController = TextEditingController();
   bool _isSending = false;
+  bool _isSharing = false;
 
   String get _verifiedEmail => FirebaseAuth.instance.currentUser?.email ?? '';
 
@@ -396,6 +398,58 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
   bool get _isRecipientValid {
     final email = _resolvedRecipient;
     return email != null && EmailValidator.validate(email);
+  }
+
+  /// Reliable path: hands the PDF to the OS share sheet (Gmail, WhatsApp,
+  /// Drive, ...) via share_plus. This is now the recommended primary
+  /// action here too, matching the mother-report share screen — it does
+  /// not depend on a mail app's intent handling, which is what caused
+  /// the baby report to sometimes fail to attach or never "arrive".
+  Future<void> _handleShareViaApps() async {
+    if (!FirestoreService.isOnline.value) {
+      _showNoInternetDialog();
+      return;
+    }
+
+    setState(() => _isSharing = true);
+    try {
+      final pdfBytes = await PdfReportService.generateBabyReport(
+        babyId: widget.babyId,
+        babyName: widget.babyName,
+      );
+      final result = await EmailShareService.sharePdf(
+        pdfBytes: pdfBytes,
+        fileName: '${widget.babyName}_Health_Report.pdf',
+        subject:
+            '${widget.babyName} — Health Report | Mother And Baby SmartCare',
+        bodyText: "Sharing ${widget.babyName}'s health report from Mother "
+            'And Baby SmartCare. The detailed PDF report is attached for '
+            'your reference.',
+        recipientHint: _isRecipientValid ? _resolvedRecipient : null,
+      );
+      if (!mounted) return;
+
+      if (result.status == ShareResultStatus.success) {
+        _showResultDialog(
+          success: true,
+          title: 'Report Shared',
+          message: "${widget.babyName}'s PDF report was shared successfully.",
+        );
+      }
+      // Dismissed the share sheet without picking an app — nothing to do.
+    } on NoInternetException {
+      if (!mounted) return;
+      _showNoInternetDialog();
+    } catch (e) {
+      if (!mounted) return;
+      _showResultDialog(
+        success: false,
+        title: 'Share Failed',
+        message: e.toString().replaceFirst('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
   }
 
   Future<void> _handleSend() async {
@@ -583,9 +637,13 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Tapping "Send" opens your email app with the '
-                                'report already attached — review it and tap '
-                                'Send inside that app to deliver it.',
+                                '"Share PDF" opens your device\'s share sheet '
+                                'so you can send the attached report through '
+                                'Gmail, WhatsApp, Drive or any app — this is '
+                                'the most reliable way to make sure the file '
+                                'actually attaches. "Open Email App" instead '
+                                'opens your mail app directly, addressed to '
+                                '$_resolvedRecipient.',
                                 style: GoogleFonts.poppins(
                                     fontSize: 11.5, color: theme.textSecondary),
                               ),
@@ -598,9 +656,9 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
                         width: double.infinity,
                         height: 54,
                         child: ElevatedButton(
-                          onPressed: (_isRecipientValid && !_isSending)
-                              ? _handleSend
-                              : null,
+                          onPressed: (_isSharing || _isSending)
+                              ? null
+                              : _handleShareViaApps,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accent,
                             disabledBackgroundColor:
@@ -608,7 +666,7 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: _isSending
+                          child: _isSharing
                               ? const SizedBox(
                                   height: 22,
                                   width: 22,
@@ -618,14 +676,50 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.send_rounded,
+                                    const Icon(Icons.ios_share_rounded,
                                         color: Colors.white, size: 18),
                                     const SizedBox(width: 8),
-                                    Text('Send PDF',
+                                    Text('Share PDF (Recommended)',
                                         style: GoogleFonts.poppins(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: Colors.white)),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed:
+                              (_isRecipientValid && !_isSending && !_isSharing)
+                                  ? _handleSend
+                                  : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: accent,
+                            side: BorderSide(
+                                color: accent.withValues(alpha: 0.5)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: _isSending
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.4, color: accent),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.email_outlined, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text('Open Email App',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w600)),
                                   ],
                                 ),
                         ),

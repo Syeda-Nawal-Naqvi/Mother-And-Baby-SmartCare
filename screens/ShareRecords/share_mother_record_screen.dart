@@ -2,6 +2,7 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../services/email_share_service.dart';
 import '../../services/firebase_service.dart';
@@ -23,6 +24,7 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
   bool _useDifferentEmail = false;
   final TextEditingController _emailController = TextEditingController();
   bool _isSending = false;
+  bool _isSharing = false;
 
   String get _verifiedEmail => FirebaseAuth.instance.currentUser?.email ?? '';
 
@@ -93,6 +95,50 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
       );
     } finally {
       if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Future<void> _handleShareViaApps() async {
+    if (!FirestoreService.isOnline.value) {
+      _showNoInternetDialog();
+      return;
+    }
+
+    setState(() => _isSharing = true);
+    try {
+      final pdfBytes = await PdfReportService.generateMotherReport();
+      final result = await EmailShareService.sharePdf(
+        pdfBytes: pdfBytes,
+        fileName: 'Mother_Health_Report.pdf',
+        subject: 'Mother Health Report — Mother And Baby SmartCare',
+        bodyText: "Sharing the mother's health report from Mother And Baby "
+            'SmartCare. The detailed PDF report is attached for your '
+            'reference.',
+        recipientHint: _isRecipientValid ? _resolvedRecipient : null,
+      );
+      if (!mounted) return;
+
+      if (result.status == ShareResultStatus.success) {
+        _showResultDialog(
+          success: true,
+          title: 'Report Shared',
+          message: 'The PDF report was shared successfully.',
+        );
+      }
+      // If the user dismissed the share sheet without picking an app,
+      // we simply do nothing — no need to show an error for that.
+    } on NoInternetException {
+      if (!mounted) return;
+      _showNoInternetDialog();
+    } catch (e) {
+      if (!mounted) return;
+      _showResultDialog(
+        success: false,
+        title: 'Share Failed',
+        message: e.toString().replaceFirst('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
     }
   }
 
@@ -222,9 +268,13 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Tapping "Send" opens your email app with the '
-                                'report already attached — review it and tap '
-                                'Send inside that app to deliver it.',
+                                '"Share PDF" opens your device\'s share sheet '
+                                'so you can send the attached report through '
+                                'Gmail, WhatsApp, Drive or any app — this is '
+                                'the most reliable way to make sure the file '
+                                'actually attaches. "Open Email App" instead '
+                                'opens your mail app directly, addressed to '
+                                '$_resolvedRecipient.',
                                 style: GoogleFonts.poppins(
                                     fontSize: 11.5, color: theme.textSecondary),
                               ),
@@ -237,9 +287,9 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
                         width: double.infinity,
                         height: 54,
                         child: ElevatedButton(
-                          onPressed: (_isRecipientValid && !_isSending)
-                              ? _handleSend
-                              : null,
+                          onPressed: (_isSharing || _isSending)
+                              ? null
+                              : _handleShareViaApps,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _accent,
                             disabledBackgroundColor:
@@ -247,7 +297,7 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: _isSending
+                          child: _isSharing
                               ? const SizedBox(
                                   height: 22,
                                   width: 22,
@@ -257,14 +307,50 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.send_rounded,
+                                    const Icon(Icons.ios_share_rounded,
                                         color: Colors.white, size: 18),
                                     const SizedBox(width: 8),
-                                    Text('Send PDF',
+                                    Text('Share PDF (Recommended)',
                                         style: GoogleFonts.poppins(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: Colors.white)),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: OutlinedButton(
+                          onPressed:
+                              (_isRecipientValid && !_isSending && !_isSharing)
+                                  ? _handleSend
+                                  : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _accent,
+                            side: BorderSide(
+                                color: _accent.withValues(alpha: 0.5)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: _isSending
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2.4, color: _accent),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.email_outlined, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text('Open Email App',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w600)),
                                   ],
                                 ),
                         ),

@@ -67,8 +67,9 @@ class MotherRecordsGraphsScreen extends StatelessWidget {
             title: Text(
               'Mother Records & Graphs',
               style: GoogleFonts.poppins(
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
-                color: theme.textPrimary,
+                color: const Color(0xFF9C1458),
               ),
             ),
           ),

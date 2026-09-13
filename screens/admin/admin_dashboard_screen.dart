@@ -274,6 +274,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             backgroundColor: theme.surface,
             elevation: 0,
             automaticallyImplyLeading: false,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: _HamburgerButton(
+                accentColor: theme.accent,
+                onTap: () => _scaffoldKey.currentState?.openDrawer(),
+              ),
+            ),
             title: Text(
               'Admin Panel',
               style: GoogleFonts.poppins(
@@ -288,53 +295,71 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                 builder: (context, snapshot) {
                   final count = snapshot.data ?? 0;
 
-                  return Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: Color(0xFFF5B301),
-                        ),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AdminNotificationsScreen(),
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: theme.surfaceAlt,
+                        borderRadius: BorderRadius.circular(13),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD400)
+                                .withValues(alpha: theme.isDark ? 0.55 : 0.40),
+                            blurRadius: theme.isDark ? 16 : 10,
+                            spreadRadius: theme.isDark ? 0.6 : 0,
+                            offset: const Offset(0, 3),
                           ),
-                        ),
+                        ],
                       ),
-                      if (count > 0)
-                        Positioned(
-                          right: 8,
-                          top: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(
+                              Icons.notifications_outlined,
+                              color: Color(0xFFF5B301),
                             ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              count > 9 ? '9+' : '$count',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const AdminNotificationsScreen(),
                               ),
                             ),
                           ),
-                        ),
-                    ],
+                          if (count > 0)
+                            Positioned(
+                              right: 4,
+                              top: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  count > 9 ? '9+' : '$count',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
-              _HamburgerButton(
-                accentColor: theme.accent,
-                onTap: () => _scaffoldKey.currentState?.openDrawer(),
-              ),
-              const SizedBox(width: 8),
             ],
           ),
           drawer: _buildDrawer(context, theme),

@@ -286,14 +286,16 @@ class _BloodPressureScreenState extends State<BloodPressureScreen> {
                             emptyIconAsset: 'assets/icons/blood_pressure.png',
                             emptyAccentColor: _BPTheme.pink,
                             itemBuilder: (context, data, id, pending) {
+                              final dateTime =
+                                  formatRecordDateTime(data['createdAt']);
                               return _ThemedRecordCard(
                                 theme: theme,
                                 iconAsset: 'assets/icons/blood_pressure.png',
                                 fallbackIcon: Icons.monitor_heart_rounded,
                                 accent: _BPTheme.pink,
                                 title:
-                                    'BP: ${data['systolic']}/${data['diastolic']}',
-                                subtitle: 'mmHg',
+                                    'BP: ${data['systolic']}/${data['diastolic']} mmHg',
+                                subtitle: dateTime,
                                 onDelete: () => _delete(id),
                                 pendingSync: pending,
                               );

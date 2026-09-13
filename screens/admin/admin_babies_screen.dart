@@ -137,7 +137,7 @@ class _AdminBabiesScreenState extends State<AdminBabiesScreen> {
                 DateFormat('dd/MM/yyyy').format(dob)),
             _detailRow(
                 theme, Icons.hourglass_bottom_rounded, 'Age', _ageLabel(dob)),
-            _detailRow(
+            _twoLineDetailRow(
                 theme, Icons.bloodtype_rounded, 'Blood Group', bloodGroup),
             const SizedBox(height: 8),
           ],
@@ -163,6 +163,36 @@ class _AdminBabiesScreenState extends State<AdminBabiesScreen> {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: theme.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _twoLineDetailRow(
+      AppThemeColors theme, IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: theme.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: theme.textSecondary)),
+                const SizedBox(height: 3),
+                Text(': $value',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textPrimary)),
+              ],
+            ),
+          ),
         ],
       ),
     );

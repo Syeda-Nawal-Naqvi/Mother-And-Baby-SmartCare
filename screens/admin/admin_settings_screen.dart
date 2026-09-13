@@ -8,6 +8,8 @@ import '../../services/admin_service.dart';
 import '../../services/app_notification_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_service.dart';
+import '../../utils/countries.dart';
+import '../../widgets/country_picker.dart';
 import '../auth/forgot_password_screen.dart';
 import 'admin_users_screen.dart';
 import 'admin_notifications_screen.dart';
@@ -27,9 +29,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
 
   String _name = '';
   String _email = '';
+  String _country = '';
   bool _isLoading = false;
   bool _isProfileLoading = true;
   bool _isSavingName = false;
+  bool _isSavingCountry = false;
   bool _notificationsEnabled = true;
 
   @override
@@ -67,6 +71,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       if (!mounted) return;
       setState(() {
         _name = (doc.data()?['name'] ?? 'Admin').toString();
+        _country = (doc.data()?['country'] ?? '').toString();
         _isProfileLoading = false;
       });
     } catch (_) {
@@ -409,6 +414,34 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _pickCountry() async {
+    final picked = await showCountryPicker(
+      context,
+      currentValue: _country.isEmpty ? null : _country,
+      title: 'Select your country',
+    );
+    if (picked == null || picked == _country || !mounted) return;
+    setState(() => _isSavingCountry = true);
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid == null) return;
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set({'country': picked}, SetOptions(merge: true));
+      if (!mounted) return;
+      setState(() {
+        _country = picked;
+        _isSavingCountry = false;
+      });
+      _showToast('Country updated successfully!', isSuccess: true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSavingCountry = false);
+      _showToast('Failed to update country.', isSuccess: false);
+    }
   }
 
   Future<void> _logout() async {
@@ -785,6 +818,87 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                       subtitleColor: subtitleColor,
                       isDark: isDark,
                     ),
+                    const SizedBox(height: 10),
+                    GestureDetector(
+                      onTap: _isSavingCountry ? null : _pickCountry,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: isDark
+                              ? Border.all(
+                                  color: ThemeService.border(isDark), width: 1)
+                              : null,
+                          boxShadow: [
+                            BoxShadow(
+                              color: ThemeService.activeAccent(isDark)
+                                  .withValues(alpha: isDark ? 0.22 : 0.14),
+                              blurRadius: 16,
+                              spreadRadius: 0.3,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981)
+                                    .withValues(alpha: isDark ? 0.18 : 0.10),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _country.isEmpty
+                                      ? '🏳️'
+                                      : (countryByName(_country).flag.isEmpty
+                                          ? '🏳️'
+                                          : countryByName(_country).flag),
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Country',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: titleColor)),
+                                  Text(
+                                      _country.isNotEmpty
+                                          ? _country
+                                          : 'Not set',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 12, color: subtitleColor)),
+                                ],
+                              ),
+                            ),
+                            _isSavingCountry
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color:
+                                            ThemeService.activeAccent(isDark)),
+                                  )
+                                : Icon(Icons.chevron_right_rounded,
+                                    color: isDark
+                                        ? ThemeService.textSecondary(isDark)
+                                        : Colors.grey.shade300,
+                                    size: 22),
+                          ],
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 28),
                     _buildSectionLabel('Notifications',
                         color: sectionLabelColor),
@@ -821,12 +935,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                             : null,
                         boxShadow: [
                           BoxShadow(
-                            color: isDark
-                                ? ThemeService.activeAccent(isDark)
-                                    .withValues(alpha: 0.05)
-                                : Colors.grey.withValues(alpha: 0.07),
-                            blurRadius: 14,
-                            offset: const Offset(0, 4),
+                            color: ThemeService.activeAccent(isDark)
+                                .withValues(alpha: isDark ? 0.22 : 0.14),
+                            blurRadius: 16,
+                            spreadRadius: 0.3,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
@@ -916,9 +1029,10 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: ThemeService.activeAccent(isDark)
-                                  .withValues(alpha: 0.05),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
+                                  .withValues(alpha: 0.22),
+                              blurRadius: 16,
+                              spreadRadius: 0.3,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
@@ -992,7 +1106,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                     const SizedBox(height: 8),
                     Center(
                       child: Text(
-                        'Mother N Baby SmartCare — Admin  ·  v1.0.0',
+                        'Mother & Baby SmartCare — Admin  ·  v1.0.0',
                         style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: isDark
@@ -1112,11 +1226,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               : null,
           boxShadow: [
             BoxShadow(
-              color: isDark
-                  ? ThemeService.activeAccent(isDark).withValues(alpha: 0.05)
-                  : Colors.grey.withValues(alpha: 0.07),
-              blurRadius: 14,
-              offset: const Offset(0, 4),
+              color: ThemeService.activeAccent(isDark)
+                  .withValues(alpha: isDark ? 0.22 : 0.14),
+              blurRadius: 16,
+              spreadRadius: 0.3,
+              offset: const Offset(0, 5),
             ),
           ],
         ),

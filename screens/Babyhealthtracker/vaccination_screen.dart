@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../services/firebase_service.dart';
 import '../../services/theme_service.dart';
+import '../../services/local_notification_service.dart';
 import '../../widgets/app_widgets.dart';
 import '../../models/baby_tracker_models.dart';
 import '../../widgets/baby_tracker_widgets.dart';
@@ -54,18 +55,30 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final wasOffline = !FirestoreService.isOnline.value;
+    final vaccineName = vaccineController.text.trim();
+    final dateForReminder = selectedDate;
 
     setState(() => isLoading = true);
     try {
-      await FirestoreService.add(
+      final ref = await FirestoreService.add(
         'vaccinations',
         VaccinationModel(
           babyId: widget.babyId,
-          vaccineName: vaccineController.text.trim(),
-          vaccinationDate: selectedDate,
+          vaccineName: vaccineName,
+          vaccinationDate: dateForReminder,
           status: status,
         ).toMap(),
       );
+
+      if (status == 'Pending') {
+        LocalNotificationService().scheduleVaccinationReminder(
+          recordId: ref.id,
+          babyName: widget.babyName,
+          vaccineName: vaccineName,
+          vaccinationDate: dateForReminder,
+        );
+      }
+
       if (!mounted) return;
       _showStatus(
         wasOffline
@@ -85,8 +98,10 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
     }
   }
 
-  Future<void> _delete(String id) =>
-      FirestoreService.delete('vaccinations', id);
+  Future<void> _delete(String id) async {
+    await LocalNotificationService().cancelVaccinationReminder(id);
+    await FirestoreService.delete('vaccinations', id);
+  }
 
   @override
   void dispose() {
@@ -112,90 +127,103 @@ class _VaccinationScreenState extends State<VaccinationScreen> {
             children: [
               const OfflineBanner(),
               Expanded(
-                child: Column(
-                  children: [
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              _Field(
-                                theme: theme,
-                                accent: accent,
-                                controller: vaccineController,
-                                label: 'Vaccine Name',
-                                iconAsset: 'assets/icons/vaccination.png',
-                                fallbackIcon: Icons.vaccines_rounded,
-                                validator: (v) =>
-                                    (v == null || v.trim().isEmpty)
-                                        ? 'Enter vaccine name'
-                                        : null,
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            _Field(
+                              theme: theme,
+                              accent: accent,
+                              controller: vaccineController,
+                              label: 'Vaccine Name',
+                              iconAsset: 'assets/icons/vaccination.png',
+                              fallbackIcon: Icons.vaccines_rounded,
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Enter vaccine name'
+                                  : null,
+                            ),
+                            const SizedBox(height: 12),
+                            _DateTile(
+                              theme: theme,
+                              accent: accent,
+                              label: 'Vaccination Date',
+                              date: selectedDate,
+                              onTap: _pickDate,
+                            ),
+                            const SizedBox(height: 12),
+                            _StatusToggle(
+                              theme: theme,
+                              accent: accent,
+                              status: status,
+                              onChanged: (v) => setState(() => status = v),
+                            ),
+                            const SizedBox(height: 18),
+                            _GradientButton(
+                              isLoading: isLoading,
+                              onPressed: _save,
+                              label: 'Save Vaccination',
+                              gradient: ThemeService.vaccinationGradient,
+                            ),
+                            if (_statusMessage != null)
+                              InlineStatusBanner(
+                                message: _statusMessage!,
+                                isError: _statusIsError,
                               ),
-                              const SizedBox(height: 12),
-                              _DateTile(
-                                theme: theme,
-                                accent: accent,
-                                label: 'Vaccination Date',
-                                date: selectedDate,
-                                onTap: _pickDate,
-                              ),
-                              const SizedBox(height: 12),
-                              _StatusToggle(
-                                theme: theme,
-                                accent: accent,
-                                status: status,
-                                onChanged: (v) => setState(() => status = v),
-                              ),
-                              const SizedBox(height: 18),
-                              _GradientButton(
-                                isLoading: isLoading,
-                                onPressed: _save,
-                                label: 'Save Vaccination',
-                                gradient: ThemeService.vaccinationGradient,
-                              ),
-                              if (_statusMessage != null)
-                                InlineStatusBanner(
-                                  message: _statusMessage!,
-                                  isError: _statusIsError,
-                                ),
-                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Records',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: theme.textPrimary,
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: AppRecordStreamList(
-                          collection: 'vaccinations',
-                          babyId: widget.babyId,
-                          orderByField: 'vaccinationDate',
-                          emptyMessage:
-                              'No vaccination records for ${widget.babyName}',
-                          emptyIcon: Icons.vaccines_rounded,
-                          emptyIconAsset: 'assets/icons/vaccination.png',
-                          emptyAccentColor: accent,
-                          itemBuilder: (context, data, id, pending) {
-                            final vDate = DateTime.tryParse(
-                                data['vaccinationDate']?.toString() ?? '');
-                            return _ThemedRecordCard(
-                              theme: theme,
-                              iconAsset: 'assets/icons/vaccination.png',
-                              fallbackIcon: Icons.vaccines_rounded,
-                              accent: accent,
-                              title: data['vaccineName'] ?? '',
-                              subtitle:
-                                  'Date: ${vDate != null ? DateFormat('dd MMM yyyy').format(vDate) : '-'}   •   Status: ${data['status'] ?? '-'}',
-                              onDelete: () => _delete(id),
-                              pendingSync: pending,
-                            );
-                          },
-                        ),
+                      const SizedBox(height: 10),
+                      AppRecordStreamList(
+                        collection: 'vaccinations',
+                        babyId: widget.babyId,
+                        orderByField: 'vaccinationDate',
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        emptyMessage:
+                            'No vaccination records for ${widget.babyName}',
+                        emptyIcon: Icons.vaccines_rounded,
+                        emptyIconAsset: 'assets/icons/vaccination.png',
+                        emptyAccentColor: accent,
+                        itemBuilder: (context, data, id, pending) {
+                          final vDate = DateTime.tryParse(
+                              data['vaccinationDate']?.toString() ?? '');
+                          final recordStatus =
+                              (data['status'] ?? '-').toString();
+                          return _ThemedRecordCard(
+                            theme: theme,
+                            iconAsset: 'assets/icons/vaccination.png',
+                            fallbackIcon: Icons.vaccines_rounded,
+                            accent: accent,
+                            title: data['vaccineName'] ?? '',
+                            dateLabel: vDate != null
+                                ? 'Date: ${DateFormat('dd MMM yyyy').format(vDate)}'
+                                : 'Date: -',
+                            status: recordStatus,
+                            onDelete: () => _delete(id),
+                            pendingSync: pending,
+                          );
+                        },
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -414,7 +442,8 @@ class _ThemedRecordCard extends StatelessWidget {
   final IconData fallbackIcon;
   final Color accent;
   final String title;
-  final String subtitle;
+  final String dateLabel;
+  final String status;
   final VoidCallback onDelete;
   final bool pendingSync;
 
@@ -424,13 +453,26 @@ class _ThemedRecordCard extends StatelessWidget {
     required this.fallbackIcon,
     required this.accent,
     required this.title,
-    required this.subtitle,
+    required this.dateLabel,
+    required this.status,
     required this.onDelete,
     this.pendingSync = false,
   });
 
+  Color _statusColor() {
+    switch (status) {
+      case 'Completed':
+        return const Color(0xFF10B981);
+      case 'Missed':
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFFF59E0B);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final statusColor = _statusColor();
     return BabyTrackerZoomCard(
       glowColor: accent,
       borderRadius: BorderRadius.circular(16),
@@ -446,6 +488,7 @@ class _ThemedRecordCard extends StatelessWidget {
           border: Border.all(color: accent.withValues(alpha: 0.25)),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             BabyTrackerIconBadge(
               iconAsset: iconAsset,
@@ -466,10 +509,34 @@ class _ThemedRecordCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           fontSize: 13.5,
                           color: theme.textPrimary)),
-                  const SizedBox(height: 2),
-                  Text(subtitle,
-                      style:
-                          TextStyle(color: theme.textSecondary, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(dateLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: theme.textSecondary, fontSize: 12)),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   if (pendingSync) ...[
                     const SizedBox(height: 4),
                     Container(

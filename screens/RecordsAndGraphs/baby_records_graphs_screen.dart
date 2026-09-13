@@ -290,6 +290,12 @@ class _BabyChoiceCardState extends State<_BabyChoiceCard> {
   }
 }
 
+class _FieldSpec {
+  final String key;
+  final String label;
+  const _FieldSpec({required this.key, required this.label});
+}
+
 class _BabyModule {
   final String title;
   final String iconPath;
@@ -300,6 +306,10 @@ class _BabyModule {
   final String unit;
   final bool isNumber;
   final String dateField;
+  final String? statusField;
+  final List<String>? statusOptions;
+  final bool editableDate;
+  final List<_FieldSpec> extraFields;
 
   const _BabyModule({
     required this.title,
@@ -311,6 +321,10 @@ class _BabyModule {
     required this.unit,
     this.isNumber = false,
     this.dateField = 'createdAt',
+    this.statusField,
+    this.statusOptions,
+    this.editableDate = false,
+    this.extraFields = const [],
   });
 }
 
@@ -336,15 +350,20 @@ class _BabyModulesScreen extends StatelessWidget {
           unit: 'kg',
           isNumber: true,
           dateField: 'date',
+          editableDate: true,
         ),
         _BabyModule(
           title: 'Vaccination',
-          iconPath: 'assets/icons/vaccine.png',
+          iconPath: 'assets/icons/vaccination.png',
           fallbackIcon: Icons.vaccines_rounded,
           color: const Color(0xFF2F6690),
           collection: 'vaccinations',
           field: 'vaccineName',
           unit: '',
+          dateField: 'vaccinationDate',
+          statusField: 'status',
+          statusOptions: const ['Pending', 'Completed'],
+          editableDate: true,
         ),
         _BabyModule(
           title: 'Allergy',
@@ -354,6 +373,10 @@ class _BabyModulesScreen extends StatelessWidget {
           collection: 'allergies',
           field: 'allergyName',
           unit: '',
+          extraFields: const [
+            _FieldSpec(key: 'reaction', label: 'Reaction'),
+            _FieldSpec(key: 'advice', label: 'Advice'),
+          ],
         ),
         _BabyModule(
           title: 'Milestone',
@@ -363,6 +386,8 @@ class _BabyModulesScreen extends StatelessWidget {
           collection: 'milestones',
           field: 'title',
           unit: '',
+          dateField: 'milestoneDate',
+          editableDate: true,
         ),
         _BabyModule(
           title: 'Medical History',
@@ -372,6 +397,10 @@ class _BabyModulesScreen extends StatelessWidget {
           collection: 'baby_medical_history',
           field: 'disease',
           unit: '',
+          extraFields: const [
+            _FieldSpec(key: 'treatment', label: 'Treatment'),
+            _FieldSpec(key: 'notes', label: 'Notes'),
+          ],
         ),
       ];
 
@@ -694,57 +723,92 @@ class _BabyModuleDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      height: 420,
-                      child: AppRecordStreamList(
-                        collection: module.collection,
-                        babyId: babyId,
-                        emptyMessage: 'No ${module.title} records yet',
-                        emptyIcon: module.fallbackIcon,
-                        itemBuilder: (context, data, id, pending) {
-                          final createdAt = DateTime.tryParse(
-                              data['createdAt']?.toString() ?? '');
-                          final subtitle = createdAt != null
-                              ? DateFormat('dd MMM yyyy, hh:mm a')
-                                  .format(createdAt)
-                              : '';
-                          final valueText = module.unit.isNotEmpty
-                              ? '${data[module.field] ?? ''} ${module.unit}'
-                              : '${data[module.field] ?? ''}';
+                    AppRecordStreamList(
+                      collection: module.collection,
+                      babyId: babyId,
+                      emptyMessage: 'No ${module.title} records yet',
+                      emptyIcon: module.fallbackIcon,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, data, id, pending) {
+                        final dateTime = formatRecordDateTime(
+                            data[module.dateField] ?? data['createdAt']);
+                        final valueText = module.unit.isNotEmpty
+                            ? '${data[module.field] ?? ''} ${module.unit}'
+                            : '${data[module.field] ?? ''}';
+                        final statusText = module.statusField != null
+                            ? (data[module.statusField] ?? '').toString()
+                            : '';
 
-                          return _HoverRecordWrap(
-                            accentColor: module.color,
-                            child: AppRecordCard(
-                              icon: module.fallbackIcon,
-                              color: module.color,
-                              title: '${module.title}: $valueText'.trim(),
-                              subtitle: subtitle,
-                              onEdit: () => _showEditRecordDialog(
-                                context: context,
-                                theme: theme,
-                                title: module.title,
-                                color: module.color,
-                                fields: [
-                                  _EditField(
-                                    key: module.field,
-                                    label: module.unit.isNotEmpty
-                                        ? '${module.title} (${module.unit})'
-                                        : module.title,
-                                    initialValue:
-                                        (data[module.field] ?? '').toString(),
-                                    isNumber: module.isNumber,
-                                  ),
-                                ],
-                                onSave: (values) => FirestoreService.update(
-                                    module.collection, id, values),
-                              ),
-                              onDelete: () => FirestoreService.delete(
-                                  module.collection, id),
-                              pendingSync: pending,
+                        final subtitleLines = <String>[];
+                        for (final ef in module.extraFields) {
+                          final v = (data[ef.key] ?? '').toString();
+                          if (v.isNotEmpty) {
+                            subtitleLines.add('${ef.label}: $v');
+                          }
+                        }
+                        if (statusText.isNotEmpty) {
+                          subtitleLines.add('Status: $statusText');
+                        }
+                        if (dateTime.isNotEmpty) subtitleLines.add(dateTime);
+
+                        final editFields = <_EditField>[
+                          _EditField(
+                            key: module.field,
+                            label: module.unit.isNotEmpty
+                                ? '${module.title} (${module.unit})'
+                                : module.title,
+                            initialValue: (data[module.field] ?? '').toString(),
+                            isNumber: module.isNumber,
+                          ),
+                          for (final ef in module.extraFields)
+                            _EditField(
+                              key: ef.key,
+                              label: ef.label,
+                              initialValue: (data[ef.key] ?? '').toString(),
                             ),
-                          );
-                        },
-                      ),
+                          if (module.statusField != null)
+                            _EditField(
+                              key: module.statusField!,
+                              label: 'Status',
+                              initialValue:
+                                  (data[module.statusField] ?? 'Pending')
+                                      .toString(),
+                              dropdownOptions: module.statusOptions,
+                            ),
+                          if (module.editableDate)
+                            _EditField(
+                              key: module.dateField,
+                              label: 'Date & Time',
+                              initialValue: _isoFromDynamic(
+                                  data[module.dateField] ?? data['createdAt']),
+                              isDate: true,
+                            ),
+                        ];
+
+                        return _HoverRecordWrap(
+                          accentColor: module.color,
+                          child: AppRecordCard(
+                            icon: module.fallbackIcon,
+                            iconAsset: module.iconPath,
+                            color: module.color,
+                            title: '${module.title}: $valueText'.trim(),
+                            subtitle: subtitleLines.join('\n'),
+                            onEdit: () => _showEditRecordDialog(
+                              context: context,
+                              theme: theme,
+                              title: module.title,
+                              color: module.color,
+                              fields: editFields,
+                              onSave: (values) => FirestoreService.update(
+                                  module.collection, id, values),
+                            ),
+                            onDelete: () =>
+                                FirestoreService.delete(module.collection, id),
+                            pendingSync: pending,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -951,16 +1015,32 @@ class _ModuleTrendChart extends StatelessWidget {
   }
 }
 
+String _isoFromDynamic(dynamic value) {
+  DateTime? dt;
+  if (value is Timestamp) {
+    dt = value.toDate();
+  } else if (value is DateTime) {
+    dt = value;
+  } else if (value is String) {
+    dt = DateTime.tryParse(value);
+  }
+  return (dt ?? DateTime.now()).toIso8601String();
+}
+
 class _EditField {
   final String key;
   final String label;
   final String initialValue;
   final bool isNumber;
+  final bool isDate;
+  final List<String>? dropdownOptions;
   const _EditField({
     required this.key,
     required this.label,
     required this.initialValue,
     this.isNumber = false,
+    this.isDate = false,
+    this.dropdownOptions,
   });
 }
 
@@ -973,92 +1053,200 @@ Future<void> _showEditRecordDialog({
   required Future<void> Function(Map<String, dynamic> values) onSave,
 }) async {
   final controllers = {
-    for (final f in fields) f.key: TextEditingController(text: f.initialValue),
+    for (final f in fields)
+      if (!f.isDate && f.dropdownOptions == null)
+        f.key: TextEditingController(text: f.initialValue),
+  };
+  final dateValues = {
+    for (final f in fields)
+      if (f.isDate) f.key: DateTime.tryParse(f.initialValue) ?? DateTime.now(),
+  };
+  final dropdownValues = {
+    for (final f in fields)
+      if (f.dropdownOptions != null)
+        f.key: f.dropdownOptions!.contains(f.initialValue)
+            ? f.initialValue
+            : f.dropdownOptions!.first,
   };
 
   await showDialog(
     context: context,
-    builder: (ctx) => AlertDialog(
-      backgroundColor: theme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
-        'Edit $title',
-        style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600, color: theme.textPrimary),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final f in fields) ...[
-              TextField(
-                controller: controllers[f.key],
-                keyboardType: f.isNumber
-                    ? const TextInputType.numberWithOptions(decimal: true)
-                    : TextInputType.text,
-                style:
-                    GoogleFonts.poppins(fontSize: 14, color: theme.textPrimary),
-                decoration: InputDecoration(
-                  labelText: f.label,
-                  labelStyle: GoogleFonts.poppins(color: theme.textSecondary),
-                  filled: true,
-                  fillColor: theme.surfaceAlt,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        backgroundColor: theme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Edit $title',
+          style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600, color: theme.textPrimary),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final f in fields) ...[
+                if (f.isDate)
+                  InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: theme.border),
+                    onTap: () async {
+                      final pickedDate = await showDatePicker(
+                        context: ctx,
+                        initialDate: dateValues[f.key]!,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate == null) return;
+                      if (!ctx.mounted) return;
+                      final pickedTime = await showTimePicker(
+                        context: ctx,
+                        initialTime: TimeOfDay.fromDateTime(dateValues[f.key]!),
+                      );
+                      final combined = DateTime(
+                        pickedDate.year,
+                        pickedDate.month,
+                        pickedDate.day,
+                        pickedTime?.hour ?? dateValues[f.key]!.hour,
+                        pickedTime?.minute ?? dateValues[f.key]!.minute,
+                      );
+                      setDialogState(() => dateValues[f.key] = combined);
+                    },
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: f.label,
+                        labelStyle:
+                            GoogleFonts.poppins(color: theme.textSecondary),
+                        filled: true,
+                        fillColor: theme.surfaceAlt,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: theme.border),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            DateFormat('dd MMM yyyy, hh:mm a')
+                                .format(dateValues[f.key]!),
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, color: theme.textPrimary),
+                          ),
+                          Icon(Icons.calendar_today_rounded,
+                              size: 16, color: color),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (f.dropdownOptions != null)
+                  DropdownButtonFormField<String>(
+                    initialValue: dropdownValues[f.key],
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, color: theme.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: f.label,
+                      labelStyle:
+                          GoogleFonts.poppins(color: theme.textSecondary),
+                      filled: true,
+                      fillColor: theme.surfaceAlt,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.border),
+                      ),
+                    ),
+                    items: [
+                      for (final o in f.dropdownOptions!)
+                        DropdownMenuItem(value: o, child: Text(o)),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) {
+                        setDialogState(() => dropdownValues[f.key] = v);
+                      }
+                    },
+                  )
+                else
+                  TextField(
+                    controller: controllers[f.key],
+                    keyboardType: f.isNumber
+                        ? const TextInputType.numberWithOptions(decimal: true)
+                        : TextInputType.text,
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, color: theme.textPrimary),
+                    decoration: InputDecoration(
+                      labelText: f.label,
+                      labelStyle:
+                          GoogleFonts.poppins(color: theme.textSecondary),
+                      filled: true,
+                      fillColor: theme.surfaceAlt,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: theme.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: color, width: 1.5),
+                      ),
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: color, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text('Cancel',
-              style: GoogleFonts.poppins(color: theme.textSecondary)),
-        ),
-        ElevatedButton(
-          onPressed: () async {
-            final values = <String, dynamic>{};
-            for (final f in fields) {
-              final text = controllers[f.key]!.text.trim();
-              if (text.isEmpty) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('${f.label} cannot be empty')));
-                return;
-              }
-              if (f.isNumber) {
-                final parsed = double.tryParse(text);
-                if (parsed == null) {
-                  ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
-                      content: Text('${f.label} must be a valid number')));
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: theme.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final values = <String, dynamic>{};
+              for (final f in fields) {
+                if (f.isDate) {
+                  values[f.key] = dateValues[f.key]!.toIso8601String();
+                  continue;
+                }
+                if (f.dropdownOptions != null) {
+                  values[f.key] = dropdownValues[f.key];
+                  continue;
+                }
+                final text = controllers[f.key]!.text.trim();
+                if (text.isEmpty) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text('${f.label} cannot be empty')));
                   return;
                 }
-                values[f.key] = parsed;
-              } else {
-                values[f.key] = text;
+                if (f.isNumber) {
+                  final parsed = double.tryParse(text);
+                  if (parsed == null) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                        content: Text('${f.label} must be a valid number')));
+                    return;
+                  }
+                  values[f.key] = parsed;
+                } else {
+                  values[f.key] = text;
+                }
               }
-            }
-            Navigator.pop(ctx);
-            await onSave(values);
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              Navigator.pop(ctx);
+              await onSave(values);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child:
+                Text('Save', style: GoogleFonts.poppins(color: Colors.white)),
           ),
-          child: Text('Save', style: GoogleFonts.poppins(color: Colors.white)),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

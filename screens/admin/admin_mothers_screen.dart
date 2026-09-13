@@ -121,7 +121,7 @@ class _AdminMothersScreenState extends State<AdminMothersScreen> {
               ),
               const SizedBox(height: 20),
               _detailRow(theme, Icons.cake_rounded, 'Age', '$age years'),
-              _detailRow(
+              _twoLineDetailRow(
                   theme, Icons.bloodtype_rounded, 'Blood Group', bloodGroup),
               _detailRow(
                   theme,
@@ -188,6 +188,36 @@ class _AdminMothersScreenState extends State<AdminMothersScreen> {
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: theme.textPrimary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _twoLineDetailRow(
+      AppThemeColors theme, IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: theme.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: theme.textSecondary)),
+                const SizedBox(height: 3),
+                Text(': $value',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: theme.textPrimary)),
+              ],
+            ),
+          ),
         ],
       ),
     );

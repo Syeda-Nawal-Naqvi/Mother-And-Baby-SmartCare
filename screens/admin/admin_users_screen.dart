@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../../services/admin_service.dart';
-import '../../services/session_service.dart';
 import '../../services/theme_service.dart';
+import '../../utils/countries.dart';
+import 'admin_login_activity_screen.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   final String? initialRoleFilter;
@@ -16,7 +16,6 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final AdminService _adminService = AdminService();
-  final SessionService _sessionService = SessionService();
   final TextEditingController _searchCtrl = TextEditingController();
   String _query = '';
 
@@ -77,6 +76,19 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     }
   }
 
+  String? _roleAvatarAsset(String role) {
+    switch (role) {
+      case 'father':
+        return 'assets/icons/father.png';
+      case 'caretaker':
+        return 'assets/icons/caretaker.png';
+      case 'mother':
+        return 'assets/icons/woman.png';
+      default:
+        return null;
+    }
+  }
+
   Future<void> _toggleBlock(
       String uid, bool currentlyBlocked, String name) async {
     try {
@@ -90,6 +102,123 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Failed: $e')));
     }
+  }
+
+  void _showCountryBreakdown(AppThemeColors theme) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (ctx, scrollCtrl) => Container(
+          decoration: BoxDecoration(
+            color: theme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: StreamBuilder<Map<String, int>>(
+            stream: _adminService.streamUserCountsByCountry(),
+            builder: (context, snapshot) {
+              final counts = snapshot.data ?? {};
+              final entries = counts.entries.toList()
+                ..sort((a, b) => b.value.compareTo(a.value));
+              final total = entries.fold<int>(0, (s, e) => s + e.value);
+
+              return Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 44,
+                    height: 5,
+                    decoration: BoxDecoration(
+                        color: theme.border,
+                        borderRadius: BorderRadius.circular(3)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text('Users by Country',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.textPrimary)),
+                        ),
+                        Text('$total total',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: theme.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: snapshot.connectionState == ConnectionState.waiting
+                        ? Center(
+                            child:
+                                CircularProgressIndicator(color: theme.accent))
+                        : entries.isEmpty
+                            ? Center(
+                                child: Text('No users yet',
+                                    style: GoogleFonts.poppins(
+                                        color: theme.textSecondary)))
+                            : ListView.builder(
+                                controller: scrollCtrl,
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                                itemCount: entries.length,
+                                itemBuilder: (context, i) {
+                                  final e = entries[i];
+                                  final flag = e.key == 'Unknown'
+                                      ? '🏳️'
+                                      : countryByName(e.key).flag;
+                                  return Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 6),
+                                    child: Row(
+                                      children: [
+                                        Text(flag.isEmpty ? '🏳️' : flag,
+                                            style:
+                                                const TextStyle(fontSize: 20)),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(e.key,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 13.5,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: theme.textPrimary)),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: theme.accent
+                                                .withValues(alpha: 0.14),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Text('${e.value}',
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: theme.accent)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmDelete(
@@ -139,179 +268,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     }
   }
 
-  Future<void> _unblockSession(
-      String uid, String sessionId, String deviceLabel) async {
-    try {
-      await _sessionService.unblockSession(uid, sessionId);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('$deviceLabel unblocked.')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to unblock: $e')));
-    }
-  }
-
-  void _showSessionsSheet(AppThemeColors theme, String uid, String name) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: theme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.6,
-          minChildSize: 0.35,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (ctx, scrollController) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 14),
-                      decoration: BoxDecoration(
-                        color: theme.border,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  Text('$name — Devices & Sessions',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: theme.textPrimary)),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Blocked devices can only be unblocked here by an admin.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: theme.textSecondary),
-                  ),
-                  const SizedBox(height: 14),
-                  Expanded(
-                    child: StreamBuilder<
-                        List<QueryDocumentSnapshot<Map<String, dynamic>>>>(
-                      stream: _sessionService.streamAllSessions(uid),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                              child: CircularProgressIndicator(
-                                  color: theme.accent));
-                        }
-                        final docs = snapshot.data ?? [];
-                        if (docs.isEmpty) {
-                          return Center(
-                            child: Text('No sessions found for this user.',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 13, color: theme.textSecondary)),
-                          );
-                        }
-                        return ListView.builder(
-                          controller: scrollController,
-                          itemCount: docs.length,
-                          itemBuilder: (context, i) {
-                            final data = docs[i].data();
-                            final sessionId = docs[i].id;
-                            final deviceLabel =
-                                (data['deviceLabel'] ?? 'Unknown device')
-                                    .toString();
-                            final status =
-                                (data['status'] ?? 'active').toString();
-                            final isRevoked = status == 'revoked';
-                            final Timestamp? ts = data['createdAt'];
-                            final timeLabel = ts != null
-                                ? DateFormat('dd/MM/yyyy hh:mm a')
-                                    .format(ts.toDate())
-                                : '';
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 10),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: theme.surfaceAlt,
-                                borderRadius: BorderRadius.circular(14),
-                                border: isRevoked
-                                    ? Border.all(
-                                        color:
-                                            Colors.red.withValues(alpha: 0.35))
-                                    : Border.all(color: theme.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    isRevoked
-                                        ? Icons.block_rounded
-                                        : Icons.devices_rounded,
-                                    color: isRevoked
-                                        ? Colors.red.shade300
-                                        : theme.accent,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(deviceLabel,
-                                            style: GoogleFonts.poppins(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                color: theme.textPrimary)),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          isRevoked
-                                              ? 'Blocked · $timeLabel'
-                                              : 'Active · $timeLabel',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            color: isRevoked
-                                                ? Colors.red.shade300
-                                                : theme.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  if (isRevoked)
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(ctx);
-                                        _unblockSession(
-                                            uid, sessionId, deviceLabel);
-                                      },
-                                      child: Text('Unblock',
-                                          style: GoogleFonts.poppins(
-                                              fontSize: 12.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: const Color(0xFF10B981))),
-                                    ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ThemeAware(
@@ -328,6 +284,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     fontWeight: FontWeight.w700,
                     color: theme.accent)),
             centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.public_rounded, color: theme.accent),
+                tooltip: 'Users by country',
+                onPressed: () => _showCountryBreakdown(theme),
+              ),
+            ],
           ),
           body: Column(
             children: [
@@ -478,8 +441,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         final email = (data['email'] ?? '').toString();
                         final role = AdminService.normalizeRole(data['role']);
                         final blocked = data['blocked'] == true;
+                        final blockedBy = (data['blockedBy'] ?? '').toString();
+                        final country = (data['country'] ?? '').toString();
                         final isMe = uid == _myUid;
                         final roleColor = _roleColor(role, theme);
+                        final avatarAsset = _roleAvatarAsset(role);
 
                         final isLegacyRecord = data['createdAt'] is! Timestamp;
 
@@ -511,8 +477,21 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   CircleAvatar(
                                     backgroundColor:
                                         roleColor.withValues(alpha: 0.16),
-                                    child: Icon(_roleIcon(role),
-                                        color: roleColor, size: 18),
+                                    child: avatarAsset != null
+                                        ? ClipOval(
+                                            child: Image.asset(
+                                              avatarAsset,
+                                              width: 40,
+                                              height: 40,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  Icon(_roleIcon(role),
+                                                      color: roleColor,
+                                                      size: 18),
+                                            ),
+                                          )
+                                        : Icon(_roleIcon(role),
+                                            color: roleColor, size: 18),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -547,6 +526,33 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                             style: GoogleFonts.poppins(
                                                 fontSize: 12,
                                                 color: theme.textSecondary)),
+                                        if (country.isNotEmpty) ...[
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                  countryByName(country)
+                                                          .flag
+                                                          .isEmpty
+                                                      ? '🏳️'
+                                                      : countryByName(country)
+                                                          .flag,
+                                                  style: const TextStyle(
+                                                      fontSize: 12)),
+                                              const SizedBox(width: 4),
+                                              Flexible(
+                                                child: Text(country,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: GoogleFonts.poppins(
+                                                        fontSize: 11.5,
+                                                        color: theme
+                                                            .textSecondary)),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                         if (isLegacyRecord) ...[
                                           const SizedBox(height: 4),
                                           Row(
@@ -596,7 +602,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                     const Icon(Icons.block_rounded,
                                         size: 14, color: Colors.red),
                                     const SizedBox(width: 4),
-                                    Text('Blocked',
+                                    Text(
+                                        blockedBy == 'self'
+                                            ? 'Blocked — user locked this '
+                                                'account (suspicious login)'
+                                            : 'Blocked by admin',
                                         style: GoogleFonts.poppins(
                                             fontSize: 11.5,
                                             color: Colors.red.shade300)),
@@ -635,13 +645,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     IconButton(
-                                      onPressed: () =>
-                                          _showSessionsSheet(theme, uid, name),
-                                      icon: Icon(Icons.devices_rounded,
+                                      onPressed: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              AdminLoginActivityScreen(
+                                                  uid: uid, userName: name),
+                                        ),
+                                      ),
+                                      icon: Icon(Icons.devices_other_rounded,
                                           color: theme.accent),
-                                      tooltip: 'Devices & sessions',
+                                      tooltip: 'View login activity',
                                     ),
-                                    const SizedBox(width: 4),
                                     IconButton(
                                       onPressed: () =>
                                           _confirmDelete(theme, uid, name),

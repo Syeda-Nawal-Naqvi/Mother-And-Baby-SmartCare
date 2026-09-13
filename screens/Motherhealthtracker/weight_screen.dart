@@ -211,8 +211,8 @@ class _WeightScreenState extends State<WeightScreen> {
                                 fallbackIcon: Icons.scale_rounded,
                                 accent: _WeightTheme.midGreen,
                                 title: '${data['weight']} kg',
-                                subtitle:
-                                    DateFormat('dd MMM yyyy').format(date),
+                                subtitle: DateFormat('dd MMM yyyy, hh:mm a')
+                                    .format(date),
                                 onDelete: () => _delete(id),
                                 pendingSync: pending,
                               );

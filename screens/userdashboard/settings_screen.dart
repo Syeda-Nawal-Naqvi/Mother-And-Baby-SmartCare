@@ -1012,7 +1012,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                         const SizedBox(height: 36),
                         Center(
                           child: Text(
-                            'Mother N Baby SmartCare  ·  v1.0.0',
+                            'Mother & Baby SmartCare  ·  v1.0.0',
                             style: GoogleFonts.poppins(
                                 fontSize: 12, color: subtitleColor),
                           ),

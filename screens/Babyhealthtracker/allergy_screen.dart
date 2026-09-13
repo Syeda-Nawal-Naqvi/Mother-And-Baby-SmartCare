@@ -148,13 +148,16 @@ class _AllergyScreenState extends State<AllergyScreen> {
             children: [
               const OfflineBanner(),
               Expanded(
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints:
-                        const BoxConstraints(maxWidth: _maxContentWidth),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: _maxContentWidth),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Form(
                             key: _formKey,
@@ -249,7 +252,16 @@ class _AllergyScreenState extends State<AllergyScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 22),
+                          Text(
+                            'Records',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: theme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
                           AppRecordStreamList(
                             collection: 'allergies',
                             babyId: widget.babyId,
