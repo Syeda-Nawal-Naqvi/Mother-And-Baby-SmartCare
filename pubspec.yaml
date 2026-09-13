@@ -24,18 +24,22 @@ dependencies:
   url_launcher: ^6.3.1
   connectivity_plus: ^7.1.1
   intl: ^0.20.2
-
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.0
   permission_handler: ^12.0.3
   audioplayers: ^6.0.0
-  flutter_local_notifications: ^18.0.1
-
+  flutter_local_notifications: 22.3.1
   image_picker: ^1.1.2
-
   geolocator: ^13.0.2
   geocoding: ^3.0.0
   fl_chart: ^1.0.0
-
   flutter_email_sender: ^10.0.1
+  # NOTE: added — required by EmailShareService.sharePdf(). This was
+  # already imported in email_share_service.dart but was missing from
+  # this file, which is why the native share-sheet flow could fail to
+  # build / resolve on some setups. This is the reliable path for
+  # attaching the PDF report to Gmail/WhatsApp/Drive etc.
+  share_plus: ^12.0.1
   path_provider: ^2.1.4
   pdf: ^3.11.1
   email_validator: ^3.0.0
