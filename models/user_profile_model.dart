@@ -6,6 +6,8 @@ class UserProfileModel {
   String? email;
   String role;
   bool blocked;
+
+  String? blockedBy;
   bool notificationsEnabled;
   bool accountVerified;
   String country;
@@ -17,6 +19,7 @@ class UserProfileModel {
     this.email,
     required this.role,
     this.blocked = false,
+    this.blockedBy,
     this.notificationsEnabled = true,
     this.accountVerified = false,
     this.country = '',
@@ -36,6 +39,7 @@ class UserProfileModel {
       email: map['email'],
       role: _normalizeRole(map['role']),
       blocked: map['blocked'] ?? false,
+      blockedBy: map['blockedBy'] as String?,
       notificationsEnabled: map['notificationsEnabled'] ?? true,
       accountVerified: map['accountVerified'] ?? false,
       country: (map['country'] ?? '').toString(),
@@ -51,6 +55,7 @@ class UserProfileModel {
         'email': email,
         'role': role,
         'blocked': blocked,
+        'blockedBy': blockedBy,
         'notificationsEnabled': notificationsEnabled,
         'accountVerified': accountVerified,
         'country': country,

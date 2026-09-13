@@ -72,18 +72,23 @@ class BloodPressureModel {
 class GlucoseModel {
   String? id;
   double glucoseLevel;
+  bool isFasting;
   Timestamp? createdAt;
 
   GlucoseModel({
     this.id,
     required this.glucoseLevel,
+    this.isFasting = true,
     this.createdAt,
   });
+
+  String get readingTypeLabel => isFasting ? 'Fasting' : 'Without Fasting';
 
   factory GlucoseModel.fromMap(Map<String, dynamic> map, String id) {
     return GlucoseModel(
       id: id,
       glucoseLevel: (map['glucoseLevel'] as num?)?.toDouble() ?? 0,
+      isFasting: map['isFasting'] is bool ? map['isFasting'] as bool : true,
       createdAt: map['createdAt'],
     );
   }
@@ -91,7 +96,10 @@ class GlucoseModel {
   factory GlucoseModel.fromSnapshot(DocumentSnapshot doc) =>
       GlucoseModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
 
-  Map<String, dynamic> toMap() => {'glucoseLevel': glucoseLevel};
+  Map<String, dynamic> toMap() => {
+        'glucoseLevel': glucoseLevel,
+        'isFasting': isFasting,
+      };
 }
 
 class MedicalHistoryModel {

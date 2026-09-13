@@ -278,12 +278,41 @@ class AdminService {
     }
   }
 
-  Future<void> setUserBlocked(String uid, bool blocked) async {
+  Future<void> setUserBlocked(String uid, bool blocked,
+      {String blockedBy = 'admin'}) async {
     if (blocked) _assertNotSelf(uid, 'block');
-    await _usersCol.doc(uid).update({'blocked': blocked});
+    await _usersCol.doc(uid).update({
+      'blocked': blocked,
+      'blockedBy': blocked ? blockedBy : null,
+      if (blocked) 'blockedAt': FieldValue.serverTimestamp(),
+      if (!blocked) 'unblockedAt': FieldValue.serverTimestamp(),
+    });
     if (blocked) {
       await AccountCleanupService.revokeAllSessions(uid);
     }
+  }
+
+  Future<Map<String, int>> getUserCountsByCountry() async {
+    final snap = await _freshGet(_usersCol);
+    final Map<String, int> counts = {};
+    for (final doc in snap.docs) {
+      final raw = (doc.data()['country'] ?? '').toString().trim();
+      final country = raw.isEmpty ? 'Unknown' : raw;
+      counts[country] = (counts[country] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  Stream<Map<String, int>> streamUserCountsByCountry() {
+    return _usersCol.snapshots().map((snap) {
+      final Map<String, int> counts = {};
+      for (final doc in snap.docs) {
+        final raw = (doc.data()['country'] ?? '').toString().trim();
+        final country = raw.isEmpty ? 'Unknown' : raw;
+        counts[country] = (counts[country] ?? 0) + 1;
+      }
+      return counts;
+    });
   }
 
   Future<void> ensureAdminDirectoryEntry() async {

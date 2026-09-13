@@ -23,7 +23,16 @@ class PdfReportService {
     final weight = await _fetchDocs('mother_weight');
     final bp = await _fetchDocs('blood_pressure');
 
-    final glucose = await _fetchDocs('glucose');
+    final glucoseRaw = await _fetchDocs('glucose');
+    final glucose = glucoseRaw.map((data) {
+      final map = Map<String, dynamic>.from(data);
+      final isFasting = map['isFasting'];
+      map['readingType'] = isFasting == null
+          ? '-'
+          : (isFasting == true ? 'Fasting' : 'Without Fasting');
+      return map;
+    }).toList();
+
     final medical = await _fetchDocs('medical_history');
 
     final doc = pw.Document();
@@ -33,12 +42,19 @@ class PdfReportService {
         header: (context) => _buildHeader('Mother Health Report', userName),
         footer: (context) => _buildFooter(context),
         build: (context) => [
-          _section('Weight', weight, ['weight'], ['Weight (kg)']),
+          _section('Weight', weight, ['weight'], ['Weight (kg)'],
+              dateField: 'date'),
           _section('Blood Pressure', bp, ['systolic', 'diastolic'],
               ['Systolic', 'Diastolic']),
+          _section('Glucose Level', glucose, ['glucoseLevel', 'readingType'],
+              ['Glucose (mg/dL)', 'Type']),
           _section(
-              'Glucose Level', glucose, ['glucoseLevel'], ['Glucose (mg/dL)']),
-          _section('Medical History', medical, ['diseaseName'], ['Condition']),
+            'Medical History',
+            medical,
+            ['diseaseName', 'medicines'],
+            ['Condition', 'Medicines'],
+            dateField: 'visitDate',
+          ),
         ],
       ),
     );
@@ -75,11 +91,34 @@ class PdfReportService {
             _buildHeader('$babyName — Health Report', subtitle),
         footer: (context) => _buildFooter(context),
         build: (context) => [
-          _section('Weight', weight, ['weight'], ['Weight (kg)']),
-          _section('Vaccinations', vaccination, ['vaccineName'], ['Vaccine']),
-          _section('Allergies', allergy, ['allergyName'], ['Allergy']),
-          _section('Milestones', milestone, ['title'], ['Milestone']),
-          _section('Medical History', medical, ['disease'], ['Condition']),
+          _section('Weight', weight, ['weight'], ['Weight (kg)'],
+              dateField: 'date'),
+          _section(
+            'Vaccinations',
+            vaccination,
+            ['vaccineName', 'status'],
+            ['Vaccine', 'Status'],
+            dateField: 'vaccinationDate',
+          ),
+          _section(
+            'Allergies',
+            allergy,
+            ['allergyName', 'reaction', 'advice'],
+            ['Allergy', 'Reaction', 'Advice'],
+          ),
+          _section(
+            'Milestones',
+            milestone,
+            ['title'],
+            ['Milestone'],
+            dateField: 'milestoneDate',
+          ),
+          _section(
+            'Medical History',
+            medical,
+            ['disease', 'treatment', 'notes'],
+            ['Condition', 'Treatment', 'Notes'],
+          ),
         ],
       ),
     );
@@ -170,8 +209,9 @@ class PdfReportService {
     String title,
     List<Map<String, dynamic>> docs,
     List<String> fields,
-    List<String> labels,
-  ) {
+    List<String> labels, {
+    String dateField = 'createdAt',
+  }) {
     if (docs.isEmpty) {
       return pw.Container(
         margin: const pw.EdgeInsets.only(bottom: 18),
@@ -193,11 +233,11 @@ class PdfReportService {
       );
     }
 
-    final headers = ['Date', ...labels];
+    final headers = ['Date & Time', ...labels];
     final rows = docs.map((data) {
-      final dt = _resolveDate(data['createdAt']);
+      final dt = _resolveDate(data[dateField] ?? data['createdAt']);
       return [
-        DateFormat('dd MMM yyyy').format(dt),
+        DateFormat('dd MMM yyyy, hh:mm a').format(dt),
         for (final f in fields) (data[f] ?? '-').toString(),
       ];
     }).toList();

@@ -1,8 +1,13 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz_data;
+import 'package:flutter_timezone/flutter_timezone.dart';
+
 import 'session_service.dart';
 import 'app_notification_service.dart';
 import 'auth_service.dart';
@@ -28,13 +33,29 @@ class LocalNotificationService {
   static const String actionConfirmLogin = 'confirm_login';
   static const String actionBlockLogin = 'block_login';
 
+  static const String _vaccinationChannelId = 'vaccination_reminders';
+  static const String _vaccinationChannelName = 'Vaccination reminders';
+  static const String _vaccinationChannelDescription =
+      'Reminders for scheduled baby vaccinations.';
+
   Future<void> init() async {
     if (_initialized) return;
+    tz_data.initializeTimeZones();
+    try {
+      final currentTimeZone = await FlutterTimezone.getLocalTimezone();
+      // v5+ of flutter_timezone returns a TimezoneInfo object, not a String.
+      tz.setLocalLocation(tz.getLocation(currentTimeZone.identifier));
+    } catch (e) {
+      debugPrint(
+        'LocalNotificationService: could not resolve device timezone, scheduled reminders will use UTC: $e',
+      );
+    }
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidInit);
     try {
+      // v19+ requires named parameters for initialize().
       await _plugin.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
       const channel = AndroidNotificationChannel(
@@ -45,7 +66,8 @@ class LocalNotificationService {
       );
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(channel);
       _initialized = true;
     } catch (e) {
@@ -88,10 +110,10 @@ class LocalNotificationService {
         return;
       }
 
-      navigatorKey.currentState?.pushNamed('/security_alert', arguments: {
-        'sessionId': sessionId,
-        'notificationId': notificationId,
-      });
+      navigatorKey.currentState?.pushNamed(
+        '/security_alert',
+        arguments: {'sessionId': sessionId, 'notificationId': notificationId},
+      );
     } catch (e) {
       debugPrint('LocalNotificationService: payload parse failed: $e');
     }
@@ -174,7 +196,8 @@ class LocalNotificationService {
     if (!_initialized) await init();
     if (!_initialized) {
       debugPrint(
-          'LocalNotificationService: show() skipped, plugin never initialized');
+        'LocalNotificationService: show() skipped, plugin never initialized',
+      );
       return;
     }
     final androidDetails = AndroidNotificationDetails(
@@ -189,10 +212,100 @@ class LocalNotificationService {
     );
     final details = NotificationDetails(android: androidDetails);
     try {
-      await _plugin.show(_notifId, title, body, details, payload: payload);
+      // v19+ requires named parameters for show(); `details` -> `notificationDetails`.
+      await _plugin.show(
+        id: _notifId,
+        title: title,
+        body: body,
+        notificationDetails: details,
+        payload: payload,
+      );
       _notifId = (_notifId + 1) % 100000;
     } catch (e) {
       debugPrint('LocalNotificationService: show failed: $e');
+    }
+  }
+
+  int _vaccinationNotificationId(String recordId) =>
+      recordId.hashCode & 0x7fffffff;
+
+  Future<void> scheduleVaccinationReminder({
+    required String recordId,
+    required String babyName,
+    required String vaccineName,
+    required DateTime vaccinationDate,
+  }) async {
+    if (!_initialized) await init();
+    if (!_initialized) {
+      debugPrint(
+        'LocalNotificationService: scheduleVaccinationReminder skipped, plugin never initialized',
+      );
+      return;
+    }
+
+    final scheduled = tz.TZDateTime(
+      tz.local,
+      vaccinationDate.year,
+      vaccinationDate.month,
+      vaccinationDate.day,
+      7,
+    );
+
+    if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) {
+      debugPrint(
+        'LocalNotificationService: vaccination reminder for $recordId not scheduled — 7 AM on that date has already passed',
+      );
+      return;
+    }
+
+    const channel = AndroidNotificationChannel(
+      _vaccinationChannelId,
+      _vaccinationChannelName,
+      description: _vaccinationChannelDescription,
+      importance: Importance.high,
+    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(channel);
+
+    const androidDetails = AndroidNotificationDetails(
+      _vaccinationChannelId,
+      _vaccinationChannelName,
+      channelDescription: _vaccinationChannelDescription,
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+    );
+    const details = NotificationDetails(android: androidDetails);
+
+    try {
+      // v19+ requires named parameters for zonedSchedule(); `details` -> `notificationDetails`.
+      await _plugin.zonedSchedule(
+        id: _vaccinationNotificationId(recordId),
+        title: 'Vaccination due today',
+        body: '$babyName has "$vaccineName" scheduled for today.',
+        scheduledDate: scheduled,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+    } catch (e) {
+      debugPrint(
+        'LocalNotificationService: scheduling vaccination reminder failed: $e',
+      );
+    }
+  }
+
+  Future<void> cancelVaccinationReminder(String recordId) async {
+    try {
+      // v19+ requires named parameter for cancel().
+      await _plugin.cancel(id: _vaccinationNotificationId(recordId));
+    } catch (e) {
+      debugPrint(
+        'LocalNotificationService: cancelling vaccination reminder failed: $e',
+      );
     }
   }
 }
