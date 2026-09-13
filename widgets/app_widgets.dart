@@ -6,6 +6,33 @@ import 'package:intl/intl.dart';
 import '../services/firebase_service.dart';
 import '../services/theme_service.dart';
 
+/// Formats a record's `createdAt` value (as stored/streamed from
+/// Firestore) into a friendly "dd MMM yyyy, hh:mm a" string.
+///
+/// Handles every shape `createdAt` can actually take at read time:
+///   • [Timestamp] — the normal case once the write has synced.
+///   • `null` — happens for a brief moment on the *local* device right
+///     after saving, because `FieldValue.serverTimestamp()` resolves to
+///     `null` in the client-side snapshot until the server assigns the
+///     real value and it syncs back down. We show "Just now" instead of
+///     crashing or showing a blank/garbage date.
+///   • [String] — in case a record was ever written with an ISO date
+///     string instead of a server timestamp.
+///   • [DateTime] — defensive fallback.
+String formatRecordDateTime(dynamic value) {
+  if (value == null) return 'Just now';
+  DateTime? dt;
+  if (value is Timestamp) {
+    dt = value.toDate();
+  } else if (value is DateTime) {
+    dt = value;
+  } else if (value is String) {
+    dt = DateTime.tryParse(value);
+  }
+  if (dt == null) return 'Just now';
+  return DateFormat('dd MMM yyyy, hh:mm a').format(dt);
+}
+
 class ModuleColors {
   static const mother = Color(0xFFE91E8C);
   static const motherLight = Color(0xFFFFE4F2);
@@ -435,6 +462,7 @@ class AppRecordCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback? onEdit;
   final bool pendingSync;
+  final String? iconAsset;
 
   const AppRecordCard({
     super.key,
@@ -445,6 +473,7 @@ class AppRecordCard extends StatelessWidget {
     required this.onDelete,
     this.onEdit,
     this.pendingSync = false,
+    this.iconAsset,
   });
 
   @override
@@ -458,7 +487,18 @@ class AppRecordCard extends StatelessWidget {
           child: ListTile(
             leading: CircleAvatar(
                 backgroundColor: color.withValues(alpha: 0.16),
-                child: Icon(icon, color: color)),
+                child: iconAsset != null
+                    ? ClipOval(
+                        child: Image.asset(
+                          iconAsset!,
+                          width: 26,
+                          height: 26,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) =>
+                              Icon(icon, color: color),
+                        ),
+                      )
+                    : Icon(icon, color: color)),
             title: Text(title,
                 style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600, color: theme.textPrimary)),
