@@ -79,8 +79,12 @@ class _AdminShopScreenState extends State<AdminShopScreen> {
           if (pickedBytes != null) {
             preview = ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.memory(pickedBytes!,
-                  width: double.infinity, height: 120, fit: BoxFit.cover),
+              child: Container(
+                width: double.infinity,
+                height: 140,
+                color: theme.accent.withValues(alpha: 0.08),
+                child: Image.memory(pickedBytes!, fit: BoxFit.contain),
+              ),
             );
           } else if (existingImageBase64 != null &&
               existingImageBase64!.isNotEmpty) {
@@ -93,12 +97,16 @@ class _AdminShopScreenState extends State<AdminShopScreen> {
             preview = bytes != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.memory(bytes,
-                        width: double.infinity, height: 120, fit: BoxFit.cover),
+                    child: Container(
+                      width: double.infinity,
+                      height: 140,
+                      color: theme.accent.withValues(alpha: 0.08),
+                      child: Image.memory(bytes, fit: BoxFit.contain),
+                    ),
                   )
                 : Container(
                     width: double.infinity,
-                    height: 120,
+                    height: 140,
                     decoration: BoxDecoration(
                       color: theme.accent.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
@@ -109,7 +117,7 @@ class _AdminShopScreenState extends State<AdminShopScreen> {
           } else {
             preview = Container(
               width: double.infinity,
-              height: 120,
+              height: 140,
               decoration: BoxDecoration(
                 color: theme.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(14),

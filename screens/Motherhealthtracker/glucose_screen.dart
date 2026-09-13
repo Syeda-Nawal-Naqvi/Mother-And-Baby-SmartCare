@@ -149,10 +149,6 @@ class _GlucoseScreenState extends State<GlucoseScreen> {
         isFasting: _isFasting,
       ).toMap();
 
-      // 'createdAt' (date + time) is stamped automatically as a Firestore
-      // server timestamp inside FirestoreService.add, so every record is
-      // saved with an accurate date & time alongside the fasting/non-fasting
-      // selection made above.
       await FirestoreService.add('glucose', data);
 
       if (!mounted) return;

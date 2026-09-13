@@ -400,11 +400,6 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
     return email != null && EmailValidator.validate(email);
   }
 
-  /// Reliable path: hands the PDF to the OS share sheet (Gmail, WhatsApp,
-  /// Drive, ...) via share_plus. This is now the recommended primary
-  /// action here too, matching the mother-report share screen — it does
-  /// not depend on a mail app's intent handling, which is what caused
-  /// the baby report to sometimes fail to attach or never "arrive".
   Future<void> _handleShareViaApps() async {
     if (!FirestoreService.isOnline.value) {
       _showNoInternetDialog();
@@ -420,10 +415,9 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
       final result = await EmailShareService.sharePdf(
         pdfBytes: pdfBytes,
         fileName: '${widget.babyName}_Health_Report.pdf',
-        subject:
-            '${widget.babyName} — Health Report | Mother And Baby SmartCare',
+        subject: '${widget.babyName} — Health Report | Mother & Baby SmartCare',
         bodyText: "Sharing ${widget.babyName}'s health report from Mother "
-            'And Baby SmartCare. The detailed PDF report is attached for '
+            '& Baby SmartCare. The detailed PDF report is attached for '
             'your reference.',
         recipientHint: _isRecipientValid ? _resolvedRecipient : null,
       );
@@ -436,7 +430,6 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
           message: "${widget.babyName}'s PDF report was shared successfully.",
         );
       }
-      // Dismissed the share sheet without picking an app — nothing to do.
     } on NoInternetException {
       if (!mounted) return;
       _showNoInternetDialog();
@@ -468,10 +461,9 @@ class _ShareBabyDetailScreenState extends State<ShareBabyDetailScreen> {
       );
       await EmailShareService.sendReportEmail(
         recipientEmail: _resolvedRecipient!,
-        subject:
-            '${widget.babyName} — Health Report | Mother And Baby SmartCare',
+        subject: '${widget.babyName} — Health Report | Mother & Baby SmartCare',
         bodyText: "Sharing ${widget.babyName}'s health report from Mother "
-            'And Baby SmartCare. The detailed PDF report is attached for '
+            '& Baby SmartCare. The detailed PDF report is attached for '
             'your reference.',
         pdfBytes: pdfBytes,
         fileName: '${widget.babyName}_Health_Report.pdf',

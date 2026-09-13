@@ -58,8 +58,8 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
       final pdfBytes = await PdfReportService.generateMotherReport();
       await EmailShareService.sendReportEmail(
         recipientEmail: _resolvedRecipient!,
-        subject: 'Mother Health Report — Mother And Baby SmartCare',
-        bodyText: "Sharing the mother's health report from Mother And Baby "
+        subject: 'Mother Health Report — Mother & Baby SmartCare',
+        bodyText: "Sharing the mother's health report from Mother & Baby "
             'SmartCare. The detailed PDF report is attached for your '
             'reference.',
         pdfBytes: pdfBytes,
@@ -110,8 +110,8 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
       final result = await EmailShareService.sharePdf(
         pdfBytes: pdfBytes,
         fileName: 'Mother_Health_Report.pdf',
-        subject: 'Mother Health Report — Mother And Baby SmartCare',
-        bodyText: "Sharing the mother's health report from Mother And Baby "
+        subject: 'Mother Health Report — Mother & Baby SmartCare',
+        bodyText: "Sharing the mother's health report from Mother & Baby "
             'SmartCare. The detailed PDF report is attached for your '
             'reference.',
         recipientHint: _isRecipientValid ? _resolvedRecipient : null,
@@ -125,8 +125,6 @@ class _ShareMotherRecordScreenState extends State<ShareMotherRecordScreen> {
           message: 'The PDF report was shared successfully.',
         );
       }
-      // If the user dismissed the share sheet without picking an app,
-      // we simply do nothing — no need to show an error for that.
     } on NoInternetException {
       if (!mounted) return;
       _showNoInternetDialog();

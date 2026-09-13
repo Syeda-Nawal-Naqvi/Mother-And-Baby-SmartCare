@@ -208,7 +208,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 20.w),
                             child: Text(
-                              'Mother And Baby SmartCare',
+                              'Mother & Baby SmartCare',
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               style: GoogleFonts.baloo2(

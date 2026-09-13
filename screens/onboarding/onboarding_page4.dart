@@ -87,7 +87,7 @@ class OnboardingPage4 extends StatelessWidget {
                             height: isSmallHeight ? 8 : 12,
                           ),
                           Text(
-                            'Generate and share professional PDF health reports instantly via Gmail.',
+                            'Generate professional PDF health reports and share them instantly via Gmail, WhatsApp, or any app you prefer.',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: bodySize,

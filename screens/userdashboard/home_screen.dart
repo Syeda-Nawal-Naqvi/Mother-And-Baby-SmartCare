@@ -594,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen>
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
-                child: Text('Mother And Baby',
+                child: Text('Mother & Baby',
                     maxLines: 1,
                     style: GoogleFonts.poppins(
                         fontSize: 17,
@@ -1086,7 +1086,7 @@ class _HoverableShopBannerState extends State<_HoverableShopBanner> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Mother And Baby Shop',
+                          Text('Mother & Baby Shop',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(

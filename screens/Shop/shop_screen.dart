@@ -281,7 +281,7 @@ class _CategoryCard extends StatelessWidget {
 
   Widget _image() {
     if (category.imageBase64.isEmpty) {
-      return Icon(Icons.category_rounded, color: palette.accent, size: 30);
+      return Icon(Icons.category_rounded, color: palette.accent, size: 34);
     }
     Uint8List? bytes;
     try {
@@ -290,11 +290,16 @@ class _CategoryCard extends StatelessWidget {
       bytes = null;
     }
     if (bytes == null) {
-      return Icon(Icons.category_rounded, color: palette.accent, size: 30);
+      return Icon(Icons.category_rounded, color: palette.accent, size: 34);
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: Image.memory(bytes, fit: BoxFit.cover),
+      borderRadius: BorderRadius.circular(16),
+      child: Image.memory(
+        bytes,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      ),
     );
   }
 
@@ -333,8 +338,9 @@ class _CategoryCard extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, c) {
               final availW = c.maxWidth.isFinite ? c.maxWidth : 120.0;
-              final imgSize = (availW * 0.6).clamp(40.0, 64.0);
+              final imgSize = (availW * 0.85).clamp(72.0, 112.0);
               final fontSize = (availW * 0.11).clamp(10.5, 13.0);
+              final hasImage = category.imageBase64.isNotEmpty;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -342,7 +348,9 @@ class _CategoryCard extends StatelessWidget {
                   Container(
                     width: imgSize,
                     height: imgSize,
-                    padding: EdgeInsets.all(imgSize * 0.14),
+                    padding: hasImage
+                        ? EdgeInsets.zero
+                        : EdgeInsets.all(imgSize * 0.22),
                     decoration: BoxDecoration(
                       color: iconTileBg,
                       borderRadius: BorderRadius.circular(16),

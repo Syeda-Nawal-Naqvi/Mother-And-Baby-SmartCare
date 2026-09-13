@@ -75,7 +75,7 @@ class OnboardingPage3 extends StatelessWidget {
                             height: isSmallHeight ? 12 : 18,
                           ),
                           Text(
-                            'Records And Graphs',
+                            'Records & Graphs',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: titleSize,
