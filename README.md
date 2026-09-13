@@ -188,4 +188,4 @@ For questions, feedback, or support, use the in-app **Contact Us** section, or o
 
 ## 📄 License
 
-This project is currently unlicensed / private. Add your preferred license here.
+This project is currently unlicensed / private.
