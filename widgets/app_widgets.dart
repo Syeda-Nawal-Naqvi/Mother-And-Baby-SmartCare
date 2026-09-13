@@ -6,19 +6,6 @@ import 'package:intl/intl.dart';
 import '../services/firebase_service.dart';
 import '../services/theme_service.dart';
 
-/// Formats a record's `createdAt` value (as stored/streamed from
-/// Firestore) into a friendly "dd MMM yyyy, hh:mm a" string.
-///
-/// Handles every shape `createdAt` can actually take at read time:
-///   • [Timestamp] — the normal case once the write has synced.
-///   • `null` — happens for a brief moment on the *local* device right
-///     after saving, because `FieldValue.serverTimestamp()` resolves to
-///     `null` in the client-side snapshot until the server assigns the
-///     real value and it syncs back down. We show "Just now" instead of
-///     crashing or showing a blank/garbage date.
-///   • [String] — in case a record was ever written with an ISO date
-///     string instead of a server timestamp.
-///   • [DateTime] — defensive fallback.
 String formatRecordDateTime(dynamic value) {
   if (value == null) return 'Just now';
   DateTime? dt;

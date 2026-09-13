@@ -28,7 +28,7 @@ class ContactLinks {
 
   static Future<void> openGmail(
     BuildContext context, {
-    String subject = 'Hello, Mother And Baby SmartCare',
+    String subject = 'Hello, Mother & Baby SmartCare',
   }) async {
     final mailUri = Uri(
       scheme: 'mailto',

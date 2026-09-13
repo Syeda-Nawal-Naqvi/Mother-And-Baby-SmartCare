@@ -90,11 +90,11 @@ class HelpRequestService {
 
     final email = Email(
       recipients: [recipientEmail],
-      subject: 'Re: Your help request — Mother And Baby SmartCare',
+      subject: 'Re: Your help request — Mother & Baby SmartCare',
       body: 'Hi $recipientName,\n\n'
-          'Thanks for reaching out to Mother And Baby SmartCare support.\n\n'
+          'Thanks for reaching out to Mother & Baby SmartCare support.\n\n'
           '\n\n'
-          '— Mother And Baby SmartCare Team',
+          '— Mother & Baby SmartCare Team',
       isHTML: false,
     );
 

@@ -138,7 +138,7 @@ class MotherAndBabySmartCare extends StatelessWidget {
         return MaterialApp(
           navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
-          title: 'Mother And Baby SmartCare',
+          title: 'Mother & Baby SmartCare',
           theme: appTheme,
           darkTheme: appTheme,
           themeMode: ThemeMode.light,

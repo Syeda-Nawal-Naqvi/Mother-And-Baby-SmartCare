@@ -169,7 +169,7 @@ class PdfReportService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            'Mother And Baby SmartCare',
+            'Mother & Baby SmartCare',
             style: pw.TextStyle(
               fontSize: 11,
               color: _brandPurple,
@@ -199,7 +199,7 @@ class PdfReportService {
       alignment: pw.Alignment.centerRight,
       margin: const pw.EdgeInsets.only(top: 8),
       child: pw.Text(
-        'Page ${context.pageNumber} of ${context.pagesCount}  ·  Mother And Baby SmartCare , Confidential Health Record',
+        'Page ${context.pageNumber} of ${context.pagesCount}  ·  Mother & Baby SmartCare , Confidential Health Record',
         style: const pw.TextStyle(fontSize: 8, color: _grey),
       ),
     );

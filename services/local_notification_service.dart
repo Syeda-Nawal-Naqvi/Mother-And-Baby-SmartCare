@@ -43,7 +43,6 @@ class LocalNotificationService {
     tz_data.initializeTimeZones();
     try {
       final currentTimeZone = await FlutterTimezone.getLocalTimezone();
-      // v5+ of flutter_timezone returns a TimezoneInfo object, not a String.
       tz.setLocalLocation(tz.getLocation(currentTimeZone.identifier));
     } catch (e) {
       debugPrint(
@@ -53,7 +52,6 @@ class LocalNotificationService {
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const initSettings = InitializationSettings(android: androidInit);
     try {
-      // v19+ requires named parameters for initialize().
       await _plugin.initialize(
         settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
@@ -66,8 +64,7 @@ class LocalNotificationService {
       );
       await _plugin
           .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >()
+              AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
       _initialized = true;
     } catch (e) {
@@ -212,7 +209,6 @@ class LocalNotificationService {
     );
     final details = NotificationDetails(android: androidDetails);
     try {
-      // v19+ requires named parameters for show(); `details` -> `notificationDetails`.
       await _plugin.show(
         id: _notifId,
         title: title,
@@ -266,8 +262,7 @@ class LocalNotificationService {
     );
     await _plugin
         .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+            AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
     const androidDetails = AndroidNotificationDetails(
@@ -282,7 +277,6 @@ class LocalNotificationService {
     const details = NotificationDetails(android: androidDetails);
 
     try {
-      // v19+ requires named parameters for zonedSchedule(); `details` -> `notificationDetails`.
       await _plugin.zonedSchedule(
         id: _vaccinationNotificationId(recordId),
         title: 'Vaccination due today',
@@ -300,7 +294,6 @@ class LocalNotificationService {
 
   Future<void> cancelVaccinationReminder(String recordId) async {
     try {
-      // v19+ requires named parameter for cancel().
       await _plugin.cancel(id: _vaccinationNotificationId(recordId));
     } catch (e) {
       debugPrint(
