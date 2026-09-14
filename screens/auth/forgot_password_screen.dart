@@ -246,7 +246,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 32),
         Text(
-          'Email Sent!',
+          'Check Your Email',
           style: GoogleFonts.poppins(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -255,7 +255,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Password reset link has been sent to',
+          'If an account exists for this email, a reset link has been sent to',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(fontSize: 14, color: _mediumPink),
         ),
@@ -277,7 +277,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
         const SizedBox(height: 14),
         Text(
-          'Check your inbox and follow the instructions to reset your password.',
+          'Please check your inbox and spam folder, and follow the instructions to reset your password. No account? Simply ignore this and no email will arrive.',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
             fontSize: 13,

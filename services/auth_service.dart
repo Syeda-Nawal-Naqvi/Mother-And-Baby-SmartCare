@@ -409,6 +409,9 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: email.trim());
       return null;
     } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return null;
+      }
       return _mapError(e.code);
     } catch (e) {
       return 'Failed to send reset email: ${e.toString()}';

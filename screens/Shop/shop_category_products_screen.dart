@@ -13,7 +13,13 @@ import '../../services/theme_service.dart';
 class ShopCategoryProductsScreen extends StatefulWidget {
   final String category;
 
-  const ShopCategoryProductsScreen({super.key, required this.category});
+  final String? browseCountry;
+
+  const ShopCategoryProductsScreen({
+    super.key,
+    required this.category,
+    this.browseCountry,
+  });
 
   @override
   State<ShopCategoryProductsScreen> createState() =>
@@ -40,7 +46,12 @@ class _ShopCategoryProductsScreenState
   @override
   void initState() {
     super.initState();
-    _loadUserCountry();
+    if (widget.browseCountry != null) {
+      _userCountry = widget.browseCountry!;
+      _countryLoaded = true;
+    } else {
+      _loadUserCountry();
+    }
   }
 
   Future<void> _loadUserCountry() async {
@@ -60,13 +71,6 @@ class _ShopCategoryProductsScreenState
     } catch (_) {
       if (mounted) setState(() => _countryLoaded = true);
     }
-  }
-
-  int _crossAxisCountFor(double width) {
-    if (width >= 1000) return 5;
-    if (width >= 720) return 4;
-    if (width >= 480) return 3;
-    return 2;
   }
 
   Future<void> _openProduct(String url) async {
@@ -188,52 +192,21 @@ class _ShopCategoryProductsScreenState
             );
           }
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = _crossAxisCountFor(constraints.maxWidth);
-              final rows = <List<int>>[];
-              for (var i = 0; i < visibleProducts.length; i += crossAxisCount) {
-                final end = (i + crossAxisCount > visibleProducts.length)
-                    ? visibleProducts.length
-                    : i + crossAxisCount;
-                rows.add(List.generate(end - i, (k) => i + k));
-              }
-
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    for (final row in rows) ...[
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            for (var c = 0; c < crossAxisCount; c++) ...[
-                              if (c < row.length)
-                                Expanded(
-                                  child: _ProductCard(
-                                    product: visibleProducts[row[c]],
-                                    isDark: isDark,
-                                    palette: _palette[row[c] % _palette.length],
-                                    onShopNow: () => _openProduct(
-                                        visibleProducts[row[c]].productUrl),
-                                  ),
-                                )
-                              else
-                                const Expanded(child: SizedBox()),
-                              if (c != crossAxisCount - 1)
-                                const SizedBox(width: 14),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (row != rows.last) const SizedBox(height: 14),
-                    ],
-                  ],
-                ),
-              );
-            },
+          return GridView.builder(
+            padding: const EdgeInsets.all(20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: 0.68,
+            ),
+            itemCount: visibleProducts.length,
+            itemBuilder: (context, i) => _ProductCard(
+              product: visibleProducts[i],
+              isDark: isDark,
+              palette: _palette[i % _palette.length],
+              onShopNow: () => _openProduct(visibleProducts[i].productUrl),
+            ),
           );
         },
       ),
@@ -304,15 +277,14 @@ class _ProductCard extends StatelessWidget {
     final textSecondary = ThemeService.textSecondary(isDark);
 
     return Container(
-      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: palette.withValues(alpha: isDark ? 0.30 : 0.20),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
             spreadRadius: 0.5,
           ),
         ],
@@ -324,12 +296,12 @@ class _ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AspectRatio(
-            aspectRatio: 1,
+          Expanded(
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(18)),
                   child: SizedBox(
                     width: double.infinity,
                     height: double.infinity,
@@ -359,40 +331,47 @@ class _ProductCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            product.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-                height: 1.2),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            product.brand,
-            style: GoogleFonts.poppins(fontSize: 10.5, color: textSecondary),
-          ),
-          const SizedBox(height: 3),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onShopNow,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: palette,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(
-                'Shop Now',
-                style: GoogleFonts.poppins(
-                    fontSize: 10.5, fontWeight: FontWeight.w600),
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  product.brand,
+                  style:
+                      GoogleFonts.poppins(fontSize: 10.5, color: textSecondary),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onShopNow,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: palette,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      'Shop Now',
+                      style: GoogleFonts.poppins(
+                          fontSize: 10.5, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

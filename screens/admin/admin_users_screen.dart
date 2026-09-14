@@ -20,6 +20,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   String _query = '';
 
   late String _roleFilter = widget.initialRoleFilter ?? '';
+  String _verifiedFilter = '';
 
   static const List<Map<String, String>> _roleTabs = [
     {'value': '', 'label': 'All'},
@@ -27,6 +28,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     {'value': 'father', 'label': 'Fathers'},
     {'value': 'caretaker', 'label': 'Caretakers'},
     {'value': 'admin', 'label': 'Admins'},
+  ];
+
+  static const List<Map<String, String>> _verifiedTabs = [
+    {'value': '', 'label': 'All'},
+    {'value': 'verified', 'label': 'Verified'},
+    {'value': 'unverified', 'label': 'Unverified'},
   ];
 
   String? get _myUid => _adminService.currentUid;
@@ -363,6 +370,48 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 ),
               ),
               const SizedBox(height: 10),
+              SizedBox(
+                height: 36,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _verifiedTabs.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, i) {
+                    final tab = _verifiedTabs[i];
+                    final selected = _verifiedFilter == tab['value'];
+                    return GestureDetector(
+                      onTap: () =>
+                          setState(() => _verifiedFilter = tab['value']!),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? theme.accent.withValues(alpha: 0.85)
+                              : theme.surfaceAlt,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                              color: selected ? theme.accent : theme.border),
+                        ),
+                        child: Center(
+                          child: Text(
+                            tab['label']!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  selected ? Colors.white : theme.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _adminService.streamAllUsers(),
@@ -394,6 +443,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         final email =
                             (data['email'] ?? '').toString().toLowerCase();
                         return name.contains(_query) || email.contains(_query);
+                      }).toList();
+                    }
+                    if (_verifiedFilter.isNotEmpty) {
+                      docs = docs.where((d) {
+                        final data = d.data() as Map<String, dynamic>;
+                        final isVerified = data['accountVerified'] == true;
+                        return _verifiedFilter == 'verified'
+                            ? isVerified
+                            : !isVerified;
                       }).toList();
                     }
 
@@ -443,6 +501,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         final blocked = data['blocked'] == true;
                         final blockedBy = (data['blockedBy'] ?? '').toString();
                         final country = (data['country'] ?? '').toString();
+                        final isVerified = data['accountVerified'] == true;
                         final isMe = uid == _myUid;
                         final roleColor = _roleColor(role, theme);
                         final avatarAsset = _roleAvatarAsset(role);
@@ -526,6 +585,26 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                             style: GoogleFonts.poppins(
                                                 fontSize: 12,
                                                 color: theme.textSecondary)),
+                                        if (!isVerified) ...[
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                  Icons
+                                                      .mark_email_unread_rounded,
+                                                  size: 12,
+                                                  color:
+                                                      Colors.orange.shade400),
+                                              const SizedBox(width: 4),
+                                              Text('Email not verified',
+                                                  style: GoogleFonts.poppins(
+                                                      fontSize: 10.5,
+                                                      color: Colors
+                                                          .orange.shade400)),
+                                            ],
+                                          ),
+                                        ],
                                         if (country.isNotEmpty) ...[
                                           const SizedBox(height: 2),
                                           Row(

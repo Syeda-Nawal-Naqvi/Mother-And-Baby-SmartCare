@@ -57,4 +57,54 @@ class ShopService {
   Future<void> deleteProduct(String id) async {
     await _col.doc(id).delete();
   }
+
+  Future<List<ShopProduct>> getAllProductsOnce() async {
+    final snapshot = await _col.get();
+    return snapshot.docs.map((d) => ShopProduct.fromDoc(d)).toList();
+  }
+
+  Future<void> applyBulkChanges({
+    List<ShopProduct> creates = const [],
+    Map<String, ShopProduct> updates = const {},
+    List<String> deletes = const [],
+  }) async {
+    final ops = <void Function(WriteBatch batch)>[];
+
+    for (final product in creates) {
+      ops.add((batch) {
+        final docRef = _col.doc();
+        final data = product.toMap();
+        data['createdAt'] = FieldValue.serverTimestamp();
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        batch.set(docRef, data);
+      });
+    }
+
+    updates.forEach((id, product) {
+      ops.add((batch) {
+        final data = product.toMap();
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        batch.update(_col.doc(id), data);
+      });
+    });
+
+    for (final id in deletes) {
+      ops.add((batch) => batch.delete(_col.doc(id)));
+    }
+
+    if (ops.isEmpty) return;
+
+    const chunkSize = 400;
+    for (var i = 0; i < ops.length; i += chunkSize) {
+      final chunk = ops.sublist(
+        i,
+        i + chunkSize > ops.length ? ops.length : i + chunkSize,
+      );
+      final batch = FirebaseFirestore.instance.batch();
+      for (final op in chunk) {
+        op(batch);
+      }
+      await batch.commit();
+    }
+  }
 }

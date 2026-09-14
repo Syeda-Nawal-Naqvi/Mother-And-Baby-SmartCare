@@ -40,4 +40,28 @@ class ShopCategoryService {
   Future<void> deleteCategory(String id) async {
     await _col.doc(id).delete();
   }
+
+  Future<List<ShopCategory>> getCategoriesOnce() async {
+    final snapshot = await _col.orderBy('createdAt', descending: false).get();
+    return snapshot.docs.map((d) => ShopCategory.fromDoc(d)).toList();
+  }
+
+  Future<String> getOrCreateCategoryId(
+    String name,
+    List<ShopCategory> knownCategories,
+  ) async {
+    final trimmed = name.trim();
+    for (final c in knownCategories) {
+      if (c.name.toLowerCase() == trimmed.toLowerCase()) {
+        return c.id;
+      }
+    }
+    final ref = await _col.add({
+      'name': trimmed,
+      'imageBase64': '',
+      'countries': <String>[],
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return ref.id;
+  }
 }

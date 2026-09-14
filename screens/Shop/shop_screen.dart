@@ -11,6 +11,8 @@ import '../../services/shop_intro_banner_service.dart';
 import '../../services/theme_service.dart';
 import '../../widgets/collaboration_card.dart';
 import '../../widgets/hover_zoom_card.dart';
+import '../../widgets/country_picker.dart';
+import '../../utils/countries.dart';
 import 'shop_category_products_screen.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -38,11 +40,25 @@ class _ShopScreenState extends State<ShopScreen> {
   String _userCountry = '';
   bool _countryLoaded = false;
 
+  String? _browseCountry;
+
+  String get _effectiveCountry => _browseCountry ?? _userCountry;
+
   @override
   void initState() {
     super.initState();
     _checkIntroBanner();
     _loadUserCountry();
+  }
+
+  Future<void> _pickBrowseCountry() async {
+    final picked = await showCountryPicker(
+      context,
+      currentValue: _effectiveCountry.isEmpty ? null : _effectiveCountry,
+      title: 'Browse shop for country',
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _browseCountry = picked);
   }
 
   Future<void> _loadUserCountry() async {
@@ -99,6 +115,26 @@ class _ShopScreenState extends State<ShopScreen> {
         title: Text('Mother & Baby Shop',
             style: GoogleFonts.poppins(
                 fontSize: 17, fontWeight: FontWeight.bold, color: primary)),
+        actions: [
+          IconButton(
+            tooltip: 'Browse another country',
+            icon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.public_rounded, color: primary),
+                if (_browseCountry != null &&
+                    _browseCountry!.isNotEmpty &&
+                    _browseCountry != _userCountry) ...[
+                  const SizedBox(width: 4),
+                  Text(countryByName(_browseCountry!).flag,
+                      style: const TextStyle(fontSize: 14)),
+                ],
+              ],
+            ),
+            onPressed: _pickBrowseCountry,
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -152,7 +188,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   }
 
                   final visibleCategories = categories
-                      .where((c) => c.visibleTo(_userCountry))
+                      .where((c) => c.visibleTo(_effectiveCountry))
                       .toList();
 
                   if (visibleCategories.isEmpty) {
@@ -176,9 +212,9 @@ class _ShopScreenState extends State<ShopScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _userCountry.isEmpty
+                              _effectiveCountry.isEmpty
                                   ? 'We\'re working on bringing the shop to more countries soon.'
-                                  : 'We\'re working on bringing the shop to $_userCountry soon.',
+                                  : 'We\'re working on bringing the shop to $_effectiveCountry soon.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
                                   fontSize: 12, color: textSecondary),
@@ -231,6 +267,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                         builder: (_) =>
                                             ShopCategoryProductsScreen(
                                           category: category.name,
+                                          browseCountry: _effectiveCountry,
                                         ),
                                       ),
                                     ),
@@ -292,6 +329,7 @@ class _CategoryCard extends StatelessWidget {
     if (bytes == null) {
       return Icon(Icons.category_rounded, color: palette.accent, size: 34);
     }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Image.memory(

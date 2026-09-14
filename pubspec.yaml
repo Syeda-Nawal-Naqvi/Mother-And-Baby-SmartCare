@@ -12,8 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  lottie: ^3.3.1
   google_fonts: ^8.1.0
+  lottie: ^3.3.1
   shared_preferences: ^2.5.3
   flutter_screenutil: ^5.9.3
   firebase_core: ^4.11.0
@@ -34,11 +34,6 @@ dependencies:
   geocoding: ^3.0.0
   fl_chart: ^1.0.0
   flutter_email_sender: ^10.0.1
-  # NOTE: added — required by EmailShareService.sharePdf(). This was
-  # already imported in email_share_service.dart but was missing from
-  # this file, which is why the native share-sheet flow could fail to
-  # build / resolve on some setups. This is the reliable path for
-  # attaching the PDF report to Gmail/WhatsApp/Drive etc.
   share_plus: ^12.0.1
   path_provider: ^2.1.4
   pdf: ^3.11.1
