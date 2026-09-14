@@ -26,7 +26,7 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
   final MotherProfileService _service = MotherProfileService();
 
   final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
+  DateTime _dob = DateTime(DateTime.now().year - 25, 1, 1);
 
   String _bloodGroup = 'A+';
   List<DeliveryRecord> _deliveries = [];
@@ -51,7 +51,7 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
     final p = widget.existingProfile;
     if (p != null) {
       _nameController.text = p.name;
-      _ageController.text = p.age.toString();
+      _dob = p.dob;
       _bloodGroup = p.bloodGroup.isNotEmpty ? p.bloodGroup : 'A+';
       _deliveries = p.deliveries
           .map((d) => DeliveryRecord(label: d.label, date: d.date))
@@ -62,7 +62,6 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _ageController.dispose();
     super.dispose();
   }
 
@@ -108,6 +107,16 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
     }
   }
 
+  Future<void> _pickDob() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dob,
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) setState(() => _dob = picked);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -125,7 +134,7 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
       final profile = MotherProfileModel(
         id: _isEditing ? widget.existingProfile!.id : null,
         name: _nameController.text.trim(),
-        age: int.tryParse(_ageController.text.trim()) ?? 0,
+        dob: _dob,
         bloodGroup: _bloodGroup,
         deliveries: _deliveries,
       );
@@ -246,21 +255,32 @@ class _MotherProfileScreenState extends State<MotherProfileScreen> {
                   },
                 ),
                 const SizedBox(height: 18),
-                _fieldLabel('Age'),
-                TextFormField(
-                  controller: _ageController,
-                  keyboardType: TextInputType.number,
-                  style: GoogleFonts.poppins(
-                      fontSize: 14, color: theme.textPrimary),
-                  decoration: _fieldDecoration(theme, 'Enter age'),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Age is required';
-                    final age = int.tryParse(v.trim());
-                    if (age == null || age <= 0 || age > 100) {
-                      return 'Enter a valid age';
-                    }
-                    return null;
-                  },
+                _fieldLabel('Date of Birth'),
+                InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: _pickDob,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: theme.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: theme.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_month_rounded,
+                            size: 18,
+                            color: _Palette.pink.withValues(alpha: 0.7)),
+                        const SizedBox(width: 10),
+                        Text(
+                          DateFormat('dd MMM yyyy').format(_dob),
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: theme.textPrimary),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 18),
                 _fieldLabel('Blood Group'),

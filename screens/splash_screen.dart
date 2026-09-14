@@ -104,6 +104,9 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacementNamed(context, '/verify_email');
         return;
       }
+
+      await AuthService()
+          .syncAccountVerifiedFlag(freshUser.uid, freshUser.emailVerified);
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(freshUser.uid)
