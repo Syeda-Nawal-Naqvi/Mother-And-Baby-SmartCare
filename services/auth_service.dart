@@ -15,7 +15,7 @@ class AuthService {
   final SessionService _sessionService = SessionService();
 
   static const List<String> _adminEmails = [
-    'motherandbabysmartcare@gmail.com',
+    'syedanawalnaqvi0512@gmail.com',
   ];
 
   static bool isAdminEmail(String? email) {
