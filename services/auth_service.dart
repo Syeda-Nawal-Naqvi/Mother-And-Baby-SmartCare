@@ -15,7 +15,7 @@ class AuthService {
   final SessionService _sessionService = SessionService();
 
   static const List<String> _adminEmails = [
-    'syedanawalnaqvi0512@gmail.com',
+    'motherandbabysmartcare@gmail.com',
   ];
 
   static bool isAdminEmail(String? email) {
@@ -32,6 +32,19 @@ class AuthService {
       await docRef.set({'role': 'admin'}, SetOptions(merge: true));
     } catch (e) {
       debugPrint('AuthService: _syncAdminRole failed for $uid: $e');
+    }
+  }
+
+  Future<void> syncAccountVerifiedFlag(String uid, bool emailVerified) async {
+    if (!emailVerified) return;
+    try {
+      final docRef = _firestore.collection('users').doc(uid);
+      final doc = await docRef.get();
+      if (doc.exists && doc.data()?['accountVerified'] != true) {
+        await docRef.update({'accountVerified': true});
+      }
+    } catch (e) {
+      debugPrint('AuthService: syncAccountVerifiedFlag failed for $uid: $e');
     }
   }
 
@@ -127,6 +140,7 @@ class AuthService {
         }
 
         await _syncAdminRole(cred.user!.uid, cred.user!.email);
+        await syncAccountVerifiedFlag(cred.user!.uid, cred.user!.emailVerified);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isFirstTime', false);
         await prefs.setBool('isLoggedIn', true);
