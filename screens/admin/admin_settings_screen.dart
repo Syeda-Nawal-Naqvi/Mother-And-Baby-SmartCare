@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import '../../services/admin_service.dart';
 import '../../services/app_notification_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_service.dart';
 import '../../utils/countries.dart';
 import '../../widgets/country_picker.dart';
 import '../auth/forgot_password_screen.dart';
-import 'admin_users_screen.dart';
 import 'admin_notifications_screen.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
@@ -23,7 +21,6 @@ class AdminSettingsScreen extends StatefulWidget {
 
 class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
   final AuthService _authService = AuthService();
-  final AdminService _adminService = AdminService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -495,66 +492,103 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    setState(() => _isLoading = true);
-    final hasBackup = await _adminService.hasAnotherActiveAdmin(uid);
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (!hasBackup) {
-      await _showMustPromoteFirstDialog();
-      return;
-    }
-
     final passwordCtrl = TextEditingController();
+    bool obscurePassword = true;
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         final isDark = context.read<ThemeNotifier>().isDarkMode;
-        return AlertDialog(
-          backgroundColor: ThemeService.surface(isDark),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('Delete Account',
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600, color: Colors.red.shade600)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'This is permanent and cannot be undone. Your admin profile '
-                'and login will be removed.',
-                style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color:
-                        isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-              ),
-              const SizedBox(height: 16),
-              _dialogField(
-                  ctrl: passwordCtrl,
-                  hint: 'Enter password to confirm',
-                  isPassword: true,
-                  isDark: isDark),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel',
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: ThemeService.surface(isDark),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: Text('Delete Account',
                   style: GoogleFonts.poppins(
-                      color: isDark ? Colors.grey.shade400 : Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade500,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                      fontWeight: FontWeight.w600, color: Colors.red.shade600)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'This is permanent and cannot be undone. Your admin profile '
+                    'and login will be removed.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: obscurePassword,
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, color: ThemeService.textPrimary(isDark)),
+                    decoration: InputDecoration(
+                      hintText: 'Enter password to confirm',
+                      hintStyle: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.grey.shade600
+                              : Colors.grey.shade400),
+                      filled: true,
+                      fillColor: ThemeService.surfaceAlt(isDark),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: ThemeService.border(isDark)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: ThemeService.border(isDark)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                            color: ThemeService.activeAccent(isDark)),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_off_rounded
+                              : Icons.visibility_rounded,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
+                          size: 20,
+                        ),
+                        onPressed: () => setDialogState(
+                            () => obscurePassword = !obscurePassword),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Text('Delete',
-                  style: GoogleFonts.poppins(color: Colors.white)),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text('Cancel',
+                      style: GoogleFonts.poppins(
+                          color: isDark ? Colors.grey.shade400 : Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade500,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text('Delete',
+                      style: GoogleFonts.poppins(color: Colors.white)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -578,63 +612,6 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
       setState(() => _isLoading = false);
       _showToast('Incorrect password. Try again.', isSuccess: false);
     }
-  }
-
-  Future<void> _showMustPromoteFirstDialog() async {
-    if (!mounted) return;
-    final isDark = context.read<ThemeNotifier>().isDarkMode;
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ThemeService.surface(isDark),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.admin_panel_settings_rounded,
-                color: Colors.orange.shade600),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('Promote another admin first',
-                  style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: ThemeService.textPrimary(isDark))),
-            ),
-          ],
-        ),
-        content: Text(
-          'You are currently the only active admin. Deleting your account '
-          'now would lock everyone out of the admin panel, so you need to '
-          'promote at least one other user to admin before you can delete '
-          'your own account.',
-          style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: GoogleFonts.poppins(
-                    color: isDark ? Colors.grey.shade400 : Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const AdminUsersScreen()));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ThemeService.activeAccent(isDark),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: Text('Go to Manage Users',
-                style: GoogleFonts.poppins(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
