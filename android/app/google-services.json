@@ -48,6 +48,42 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:100960866797:android:8240307debec2ff76457e4",
+        "android_client_info": {
+          "package_name": "com.naqvi.motherandbabysmartcare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "100960866797-j70rvariqhij1ihh3s1g16ehsncs943i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAULqaZV3MgrIKYCwvjesecxq_MbIbo894"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "100960866797-j70rvariqhij1ihh3s1g16ehsncs943i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "100960866797-7fvdp314td6l38qikvn4cnl6nn7b1e7a.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.motherAndBabySmartcare"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

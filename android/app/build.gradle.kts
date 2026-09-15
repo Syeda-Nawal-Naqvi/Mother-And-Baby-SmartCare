@@ -16,11 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.mother_and_baby_smartcare"
-        // The `alarm` package requires minSdk 23 minimum — flutter.minSdkVersion
-        // can resolve lower than that (Flutter's own default is 21), which
-        // silently breaks exact-alarm scheduling on older devices. Pinned
-        // explicitly so this can never regress if the Flutter default changes.
+        applicationId = "com.naqvi.motherandbabysmartcare"
         minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = 36
         versionCode = flutter.versionCode
