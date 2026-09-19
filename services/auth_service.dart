@@ -15,7 +15,7 @@ class AuthService {
   final SessionService _sessionService = SessionService();
 
   static const List<String> _adminEmails = [
-    'motherandbabysmartcare@gmail.com',
+    'syedanawalnaqvi0512@gmail.com',
   ];
 
   static bool isAdminEmail(String? email) {
@@ -52,7 +52,10 @@ class AuthService {
 
   Future<void> _ensureGoogleInitialized() async {
     if (_googleInitialized) return;
-    await _googleSignIn.initialize();
+    await _googleSignIn.initialize(
+      serverClientId:
+          '100960866797-j70rvariqhij1ihh3s1g16ehsncs943i.apps.googleusercontent.com',
+    );
     _googleInitialized = true;
   }
 
@@ -270,7 +273,7 @@ class AuthService {
         await _googleSignIn.signOut();
         await _auth.signOut();
       } catch (_) {}
-      return {'error': 'Google sign-in failed. Please try again.'};
+      return {'error': 'Google sign-in failed. Code: ${e.code}. Details: ${e.description}'};
     } on FirebaseAuthException catch (e) {
       try {
         await _googleSignIn.signOut();
