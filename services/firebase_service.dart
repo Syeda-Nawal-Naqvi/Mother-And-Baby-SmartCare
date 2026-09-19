@@ -10,6 +10,15 @@ class FirestoreService {
 
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  static const Set<String> _autoCleanCollections = {
+    'mother_weight',
+    'glucose',
+    'blood_pressure',
+    'baby_weight',
+  };
+  static const int _keepCount = 30;
+  static const int _keepDays = 30;
+
   static String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
   static final ValueNotifier<bool> isOnline = ValueNotifier<bool>(true);
@@ -93,35 +102,55 @@ class FirestoreService {
 
   static Future<DocumentReference<Map<String, dynamic>>> add(
     String name,
-    Map<String, dynamic> data, {
-    int? maxRecords = 30,
-  }) async {
+    Map<String, dynamic> data,
+  ) async {
     final ref = await collection(name).add({
       ...data,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    if (maxRecords != null) {
-      unawaited(_enforceCap(name, maxRecords));
+    if (_autoCleanCollections.contains(name)) {
+      unawaited(_autoClean(name));
     }
 
     return ref;
   }
 
-  static Future<void> _enforceCap(String name, int maxRecords) async {
+  static Future<void> _autoClean(String name) async {
     try {
       final snap =
           await collection(name).orderBy('createdAt', descending: true).get();
-      if (snap.docs.length <= maxRecords) return;
+      if (snap.docs.length <= _keepCount) return;
 
-      final toDelete = snap.docs.sublist(maxRecords);
+      final cutoff = DateTime.now().subtract(const Duration(days: _keepDays));
+
+      final groups =
+          <String, List<QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+      for (final doc in snap.docs) {
+        final key = (doc.data()['babyId'] ?? '').toString();
+        groups.putIfAbsent(key, () => []).add(doc);
+      }
+
+      final toDelete = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+      for (final docs in groups.values) {
+        if (docs.length <= _keepCount) continue;
+        for (final doc in docs.sublist(_keepCount)) {
+          final created = doc.data()['createdAt'];
+          if (created is Timestamp && created.toDate().isBefore(cutoff)) {
+            toDelete.add(doc);
+          }
+        }
+      }
+
+      if (toDelete.isEmpty) return;
+
       final batch = _db.batch();
       for (final doc in toDelete) {
         batch.delete(doc.reference);
       }
       await batch.commit();
     } catch (e) {
-      debugPrint('FirestoreService: cap enforcement skipped for '
+      debugPrint('FirestoreService: auto clean skipped for '
           '"$name" (will retry on next add): $e');
     }
   }
