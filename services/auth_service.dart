@@ -179,9 +179,17 @@ class AuthService {
   }) async {
     try {
       await _ensureGoogleInitialized();
+    } catch (e) {
+      debugPrint('AuthService: Google initialize failed: $e');
+      return {'error': 'Google sign-in is unavailable. Please try again.'};
+    }
+
+    try {
       await _googleSignIn.signOut();
       await _auth.signOut();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('AuthService: pre-signOut error (ignored): $e');
+    }
 
     try {
       final googleUser = await _googleSignIn.authenticate();
@@ -192,7 +200,9 @@ class AuthService {
         final authz = await googleUser.authorizationClient
             .authorizeScopes(['email', 'profile']);
         accessToken = authz.accessToken;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('AuthService: authorizeScopes failed (non-fatal): $e');
+      }
 
       if (idToken == null) {
         return {'error': 'Google authentication failed. Please try again.'};
@@ -266,15 +276,19 @@ class AuthService {
         'securityNotice': securityNotice,
       };
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
-        return {'error': 'Google sign-in was cancelled.'};
-      }
+      // Details go to the log only; the user sees a friendly message.
+      debugPrint('GSI ERROR: code=${e.code.name} | '
+          'description=${e.description} | details=${e.details}');
       try {
         await _googleSignIn.signOut();
         await _auth.signOut();
       } catch (_) {}
-      return {'error': 'Google sign-in failed. Code: ${e.code}. Details: ${e.description}'};
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        return {'error': 'Google sign-in was cancelled.'};
+      }
+      return {'error': 'Google sign-in failed. Please try again.'};
     } on FirebaseAuthException catch (e) {
+      debugPrint('AuthService: FirebaseAuthException ${e.code} ${e.message}');
       try {
         await _googleSignIn.signOut();
         await _auth.signOut();
@@ -287,11 +301,12 @@ class AuthService {
       } catch (_) {}
       return {'error': '${_mapError(e.code)} (${e.code})'};
     } catch (e) {
+      debugPrint('AuthService: unknown Google sign-in error: $e');
       try {
         await _googleSignIn.signOut();
         await _auth.signOut();
       } catch (_) {}
-      return {'error': 'Google sign-in failed: ${e.toString()}'};
+      return {'error': 'Google sign-in failed. Please try again.'};
     }
   }
 
@@ -494,6 +509,8 @@ class AuthService {
       await _auth.currentUser?.reauthenticateWithCredential(credential);
       return null;
     } on GoogleSignInException catch (e) {
+      debugPrint('GSI reauth ERROR: code=${e.code.name} | '
+          'description=${e.description} | details=${e.details}');
       if (e.code == GoogleSignInExceptionCode.canceled) {
         return 'Re-authentication was cancelled.';
       }
