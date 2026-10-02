@@ -11,6 +11,7 @@ import '../../utils/countries.dart';
 import '../../widgets/country_picker.dart';
 import '../auth/forgot_password_screen.dart';
 import 'admin_notifications_screen.dart';
+import '../userdashboard/login_activity_screen.dart';
 
 class AdminSettingsScreen extends StatefulWidget {
   const AdminSettingsScreen({super.key});
@@ -796,6 +797,27 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                       isDark: isDark,
                     ),
                     const SizedBox(height: 10),
+                    _buildSettingsTile(
+                      icon: Icons.devices_rounded,
+                      iconBg: isDark
+                          ? const Color(0xFF3A1440)
+                          : const Color(0xFFF3E5F9),
+                      iconColor: isDark
+                          ? const Color(0xFFD8A6E8)
+                          : const Color(0xFF8B5CF6),
+                      label: 'Login Activity',
+                      subtitle: 'See and manage your signed-in devices',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const LoginActivityScreen()),
+                      ),
+                      cardColor: cardColor,
+                      titleColor: titleColor,
+                      subtitleColor: subtitleColor,
+                      isDark: isDark,
+                    ),
+                    const SizedBox(height: 10),
                     GestureDetector(
                       onTap: _isSavingCountry ? null : _pickCountry,
                       child: Container(
@@ -1070,7 +1092,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                           : const Color(0xFFFFEBEE),
                       iconColor: Colors.red.shade400,
                       label: 'Delete Account',
-                      subtitle: 'Requires promoting another admin first',
+                      subtitle: 'Permanently delete your admin account',
                       onTap: _deleteAccount,
                       labelColor: Colors.red.shade500,
                       cardColor: cardColor,
